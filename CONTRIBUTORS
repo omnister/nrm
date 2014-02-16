@@ -1,0 +1,10 @@
+
+9/22/99 Nat Makarevitch <nat@editions-oreilly.fr> 
+    General code cleanups:
+    - fixed uninitialized junk variable in basename.c
+    - removed unused "digit_optind" variable in nrmmain.c
+    - removed unused "this_option_optind" variable in nrmmain.c
+    - replaced "initialized" variable in savefile.c with "pid"
+    - improved ntostr error message by prepending "nrm bug:" in savefile.c
+
+
