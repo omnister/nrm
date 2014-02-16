@@ -1,16 +1,18 @@
 #include <stdio.h>
 
-extern int fflag;
+extern int bflag;   /* => 1, if we are in the background, 0 otherwise */
 
 pick(s) /* offer choice of s */
 char *s;
 {
-    fprintf(stderr, "%s: ? ",s);
+    if (s[0])           /* format tweaking! (just like /bin/rm) */
+        fprintf(stderr, "%s: ? ",s);
+    else 
+        fprintf(stderr, " ? ");
 
-	/* if set quiet, always return no (0) */
-	/* fflag always cleared if we are in the background ... */
-
-    if (fflag && (ttyin() == 'y')) 
-        return(1);
-    return(0);
+    if (bflag) {        /* if in the background, return 0 */
+        fprintf(stderr, "n\n");
+        return(0);      /* don't call ttyin if in background!! */
+    } else 
+        return (ttyin() == 'y');
 }

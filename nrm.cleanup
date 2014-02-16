@@ -7,33 +7,43 @@
 #will also delete directories as they become empty.
 #Rick Walker 10/10/86
 
-NUMLINES=200			#number of lines to save in logfile
-LOGFILE=/etc/nrm.log	#logfile for deleted filenames
-TEMPFILE=/tmp/nrm.$$	#tmp file used each day to list all deleted files
-GRACETIME="+3"			#gracetime to let files hang around	
-						#if you modify this line then update the man page.
+NUMLINES=200            #number of lines to save in logfile
+LOGFILE=/etc/nrm.log    #logfile for deleted filenames
+TEMPFILE=/tmp/nrm.$$    #tmp file used each day to list all deleted files
+GRACETIME="+3"          #gracetime to let files hang around 
+                        #if you modify this line then update the man page.
 
-	echo '****' 'Files Deleted' `date` '****' > $TEMPFILE 
+    echo '****' 'Files Deleted' `date` '****' > $TEMPFILE 
 
-find / -name '.gone' -print 2>/dev/null |
+find2 ()
+{
+    if [ -x /usr/local/bin/find2 ] ; then
+    # find2 is a modified find that avoids searching nfs filesystems
+        /usr/local/bin/find2 "$@" -fstype hfs -fsstop 
+    else
+        find "$@" -fstype hfs
+    fi
+}
+
+find2 / -name '.gone' -print 2>/dev/null |
 while read file
 do
-	#kill all old files	
-  	find $file -type f -atime +$GRACETIME\
-	-exec /bin/rm -f {} \; \
-	-print \
-	>> $TEMPFILE 2>/dev/null
+    #kill all old files 
+    find $file -type f -atime +$GRACETIME\
+    -exec /bin/rm -f {} \; \
+    -print \
+    >> $TEMPFILE 2>/dev/null
 
-	#kill all empty directories
-	find $file -type d \
-	-exec /bin/rmdir {} \; \
-	-print \
-	>> $TEMPFILE 2>/dev/null
+    #kill all empty directories
+    find $file -type d \
+    -exec /bin/rmdir {} \; \
+    -print \
+    >> $TEMPFILE 2>/dev/null
 done
 
-	touch $LOGFILE
-	cat $LOGFILE >> $TEMPFILE
-	head -$NUMLINES $TEMPFILE > $LOGFILE 
-	/bin/rm $TEMPFILE
+    touch $LOGFILE
+    cat $LOGFILE >> $TEMPFILE
+    head -$NUMLINES $TEMPFILE > $LOGFILE 
+    /bin/rm $TEMPFILE
 
 exit 0

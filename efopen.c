@@ -13,5 +13,5 @@ char *file, *mode;
     errout("%s: can't open file %s mode %s",
         progname, file, mode);
     exit(1);
-	return(0);    /* unreachable statement to pacify lint */
+    return(0);    /* unreachable statement to pacify lint */
 }

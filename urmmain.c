@@ -3,6 +3,9 @@
 char    *progname;  /* program name for error message */
 int fflag = 1;
 int iflag = 0;      /* dummy global for isdir() */
+int bflag = 0;      /* dummy global for isdir() */
+
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.12 88/03/09 10:23:50 walker Exp $";
 
 main(argc, argv)    /* urm: restore deleted files/dirs */
 int argc;

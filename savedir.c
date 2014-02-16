@@ -29,7 +29,7 @@ char *path;         /* deletes dst first !!! */
                 return(ERR);
             }
             return(0);
-        } 
+        }
     } else {                /* linkdir failed so don't leave any */
         expunge(dstfile);       /* junk hanging around */
         return(1);

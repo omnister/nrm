@@ -12,5 +12,5 @@ ttyin() /* process response from /dev/tty (version 1) */
         tty = efopen("/dev/tty","r");
     if (fgets(buf,BUFSIZ,tty) == NULL || buf[0] == 'q')
         exit(0);
-    return(buf[0]);	/* else ordinary line */
+    return(buf[0]); /* else ordinary line */
 }
