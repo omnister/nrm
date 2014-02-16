@@ -24,7 +24,8 @@ char    *fname;
         !strcmp(fname, "..") || 
         !strcmp(fname, ".")) { /* prevents nasty recursion ! */
         fprintf(stderr, "%s: cannot remove %s\n", progname, fname);
-        return(0);
+        /* return(0); */
+        return(2);			/* treat as an error */
     }
     if (dirflag && !rflag) {
         fprintf(stderr, "%s: %s directory, try -r option\n", progname, fname);
