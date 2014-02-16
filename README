@@ -1,0 +1,18 @@
+to install:
+
+'make install', or manually do the following:
+
+	1) copy 'nrm' to /usr/local/bin/nrm
+	2) copy 'urm' to /usr/local/bin/urm
+	3) copy 'nrm.cleanup' to /etc/nrm.cleanup
+	4) copy 'nrm.1' to /usr/local/man/man1/nrm.1
+	5) add the following daily job to your crontab: 
+		find / -name '.gone' -print 2>/dev/null | /etc/nrm.cleanup
+
+All the sources were edited using 4 character tabstops (in vi: set ts=4).
+For distribution, tabstops have been converted into spaces using the
+utility "expand -4".
+
+The program 'gtime' is helpful if you want to look at filetimes.
+It is invoked 'gtime -acm' and prints access, change and modify times.
+If no flags specified, all times are printed.

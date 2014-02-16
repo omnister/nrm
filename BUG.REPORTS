@@ -1,0 +1,903 @@
+From poulton Fri Dec  5 16:42:02 1986
+To: walker
+Subject: Re:  s500 nrm
+Status: R
+
+Bitch, bitch, bitch...
+
+nrm seems quite slow, even if .gone already exists (I observe 
+2-3x slower).
+
+Do you do all the right checks for file/directory, existence
+of .gone, etc before doing the move into .gone?  If so, a speed hack
+would be to just attempt to move the file into .gone first.
+If it succeeded, you're done; if not, then you take the careful
+path.
+
+The reason that making those checks is slow is that each one takes
+a system call and a disc access.
+
+Ken
+
+From poulton Fri Dec  5 15:59:12 1986
+To: walker
+Subject: Re:  s500 nrm
+Status: RO
+
+Is there any reason to have the initial find (in the crontab)
+*not* part of nrm.cleanup?
+
+Ken
+
+From walker Fri Dec  5 15:03:09 1986
+To: poulton
+Subject: s500 nrm
+Cc: walker
+Status: RO
+
+Hi Ken
+
+The same source compiles w/no changes on opus.
+
+Since we last talked I found a bug in the cleanup script.
+It didn't properly delete empty directories. (now fixed)
+
+There are also some changes to the man page.
+
+In the same directory there is a simple utility
+called 'gtime' which is invoked with options [-acm].
+It prints out the access, modify and change
+times for a file.  If no options given, then all times are printed.
+
+I have s500 versions in <opus>/users/walker/bin/src/nrm.
+ 
+-Rick
+
+From poulton Thu Dec  4 21:19:05 1986
+To: walker
+Subject: nrm
+Status: RO
+
+Is there a s500 version?
+
+ken
+
+Hi Ken
+
+Some tentative comments:
+
+>	Is there any reason to have the initial find (in the crontab)
+>	*not* part of nrm.cleanup?
+
+>	Ken
+
+I was mainly just apeing the form used by the del script.  It does
+make the script alot easier to write because the second 'find' 
+can't read stdin for paths.  I didn't want to use the "for i in `find` "
+construct because that would be limited to some maximum number of
+characters by the shell.  The only way I can think to do it is to make a
+subshell inside of nrm.cleanup using the () construct. Is this a 
+problem?  I can see that it would be nice to make everything self
+contained.
+
+>	nrm seems quite slow, even if .gone already exists (I observe 
+>	2-3x slower).
+
+>	Do you do all the right checks for file/directory, existence
+>	of .gone, etc before doing the move into .gone?  If so, a speed hack
+>	would be to just attempt to move the file into .gone first.
+>	If it succeeded, you're done; if not, then you take the careful
+>	path.
+
+>	The reason that making those checks is slow is that each one takes
+>	a system call and a disc access.
+
+I tried making some quick and ugly hacks and it was just marginally
+faster.  What was it 2-3x slower compared to?  If it was /bin/rm
+then I can understand that speed factor.  Nrm has to not only delete
+the file, but do a link and set the time.  ~3 system calls vs ~1.
+
+I think a more fair comparison would be to compare it to /bin/mv.
+
+Isn't the directory be cached?  I assumed that doing the checks would
+be reasonably quick - as opposed to actually modifying the directory 
+structure. 
+
+>	Ken
+
+Let me know what you think... maybe you can get a different angle on it.
+Since I've sunk so much effort in getting it this far, it's worth
+getting it right...
+
+Rick
+Ken -
+
+I eat my words... (some of them anyway)
+Here are some times for nrm, mv, rm, & nrmnew (with mods to not mkdir 
+.gone each time).  I was deleting ~10 ?.o files for a benchmark.
+
+Cutt 375> time nrm *.o
+real    0m7.86s
+user    0m0.12s
+sys     0m2.12s
+
+Cutt 409> time nrmnew *.o
+real    0m5.42s
+user    0m0.20s
+sys     0m1.76s
+
+Cutt 386> time touch *.o
+real    0m0.92s
+user    0m0.00s
+sys     0m0.74s
+
+Cutt 377> time mv *.o .gone
+real    0m4.76s
+user    0m0.02s
+sys     0m1.42s
+
+Cutt 381> time /bin/rm *.o
+real    0m3.46s
+user    0m0.04s
+sys     0m1.02s
+
+Notice that nrmnew is about equal to a move + a touch, give or take.
+I'll try to integrate this idea into the code in a nice way. (the
+above was just hacked in...)  I doubt if I can speed it up much
+beyond this.
+
+Rick "tweak, tweak, tweak..." 
+
+From poulton Wed Dec 17 12:58:07 1986
+To: walker
+Subject: nrm
+Status: RO
+
+Nrm has a problem with files you don't own.  It refuses to move files
+that you don't own, and it doesn't prompt you the way rm does.
+The -f option works, but I guess having it prompt you for files
+that you don't have write permission to (like rm) is needed to
+avoid confusion.
+
+Ken
+
+From poulton Wed Dec 17 12:58:07 1986
+To: walker
+Subject: nrm
+Status: RO
+
+Nrm has a problem with files you don't own.  It refuses to move files
+that you don't own, and it doesn't prompt you the way rm does.
+The -f option works, but I guess having it prompt you for files
+that you don't have write permission to (like rm) is needed to
+avoid confusion.
+
+Ken
+
+From poulton Wed Dec 17 14:11:06 1986
+To: walker
+Subject: nrm
+Status: R
+
+I take it back; the -f option doesn't even work properly on files
+you don't own!  The link succeeds, but the remove fails!
+
+Ken
+
+From poulton Wed Dec 17 14:11:06 1986
+To: walker
+Subject: nrm
+Status: R
+
+I take it back; the -f option doesn't even work properly on files
+you don't own!  The link succeeds, but the remove fails!
+
+Ken
+
+
+From farland Tue Dec 23 09:57:44 1986
+To: walker
+Subject: nrm
+Status: R
+
+Rick could you please change the error message: nrm: xxxxxx is a directory
+to be xxxxxx is a directory. Use option -r to remove directories.
+I so rarely remove directories that I forget and have to look in the man entry.
+			bill
+
+From walker Tue Dec 23 14:26:12 1986
+To: farland
+Subject: nrm error messages
+Cc: walker
+Status: R
+
+	
+
+>Rick could you please change the error message: nrm: xxxxxx is a directory
+>to be xxxxxx is a directory. Use option -r to remove directories.
+>I so rarely remove directories that I forget and have to look in the man entry.
+>				bill
+
+	The error message that nrm gives is specifically trying to be
+an exact duplicate of the error message that 'rm' gives under similiar
+circumstances.  I was trying to be as close a copy as possible.  While
+this is a nice goal, your comment makes me wonder if I should not be
+quite so pedantic about it.
+
+	Before I change it though, have you noticed that nrm (and rm for
+that matter) both give a usage synopsis if invoked without arguments?
+
+Cutter 51> nrm
+usage: nrm [-fir][-t time] file ...
+Cutter 52>
+
+	Is this enough of a memory jogger?  If I make the error messages
+more verbose, other people might get annoyed...
+
+Oh well, can't please 'em all.
+
+	Rick
+
+From farland Tue Dec 23 14:31:10 1986
+To: walker
+Subject: Re:  nrm error messages
+Status: R
+
+Verboseness is my middle name. That's why I like pascal, you can actually
+figure out what is going on without having memorized every two letter
+combination possible.
+
+
+From uucp Fri Jan  2 01:25:45 1987
+>From poulton Fri Jan  2 01:24 PST 1987 remote from hpl-milo
+To: walker
+Subject: Another nrm bug
+Status: R
+
+With special files (as made by "mknod /net/foo n foo" nrm says:
+nrm: can't delete foo: wrong file type
+while rm just does it.
+
+Ken
+
+>	
+>	With special files (as made by "mknod /net/foo n foo" nrm says:
+>	nrm: can't delete foo: wrong file type
+>	while rm just does it.
+>	
+>	Ken
+>	
+
+Heres the code from nrmmain.c:
+-------
+    } else if (dirflag == -2) {	/* denotes strange file type */
+	errout("%s: can't delete %s: wrong file type",progname,fname,"");
+	    return(2*fflag);
+    }
+-------
+
+And more stuff from isdir.c:
+-------
+isdir(fname) /* file a directory? 1 if true, -1 if error, 0 regular file */
+char *fname; /* -2 if strange file type (fifo, special ... )	*/
+{
+-------
+
+The reason I did this is to avoid the problem of creating the new file in
+'.gone'.  If I just do a 'link' operation, will the bizarre file type
+be preserved?  /bin/rm, of course, doesn't have this problem because it just
+destroys the file.
+
+I was especially scared away from permitting the user to muck with special
+files because of a similiar program written by Dave Taylor.  His man page
+states: "Strange things can happen if you try to specify something other
+than a regular file." My thinking was, 'better safe than sorry'.
+
+Do you think this is a problem? 
+I thought it was a feature :-).
+
+Rick
+
+
+From poulton Tue Jan  6 12:41:23 1987
+To: walker
+Subject: Re:  nrm bugs
+Status: R
+
+> The reason I did this is to avoid the problem of creating the new file in
+> '.gone'.  If I just do a 'link' operation, will the bizarre file type
+> be preserved?  /bin/rm, of course, doesn't have this problem because it just
+> destroys the file.
+
+Yes, you can just link and remove strange files (or at least, rm
+and ln work on these in the normal fashion).  I think all you have
+to avoid is directories.
+
+> I was especially scared away from permitting the user to muck with special
+> files because of a similiar program written by Dave Taylor.  His man page
+> states: "Strange things can happen if you try to specify something other
+> than a regular file." My thinking was, 'better safe than sorry'.
+
+I don't know what he meant, but the operating system *shouldn't*
+allow you to hurt the file system no matter what you do (short of
+rewriting directories).  I am not worried about trying this.
+
+> Do you think this is a problem? 
+> I thought it was a feature :-).
+
+I guess my feeling is that in order to be the ultimate safe-rm,
+nrm has to act as much like rm as possible.  I had thought
+you were already there, but I hadn't realized how many funny cases
+there are to deal with.  At the present, I find myself butting
+into the special cases too often for comfort - I keep having
+to back up and use /bin/rm.
+
+Ken
+
+
+From walker Tue Jan  6 15:30:30 1987
+To: poulton
+Subject: nrm bugs
+Cc: walker
+Status: R
+
+Ken
+
+It was operator error.
+I had only half patched up the code to ignore the return value
+from 'isdir()'.  urm looked at the non-zero return value and assumed
+it was a directory. 
+
+The link experiment worked fine.
+
+The new version of all files is in /usr/local/src/cmd/nrm.
+
+Make install bombed for me because I don't own urm.
+After installation, it should properly deal with strange file types.
+(It would also have worked before I tried to be fancy and stop it)...
+
+Rick
+
+From poulton Tue Jan  6 15:32:19 1987
+To: walker
+Subject: nrm
+Status: R
+
+See /usr/src/cmd for examples  :-)
+
+Note that this code must stay on Opus' disc and that
+you may use it for understanding, but not copying.
+
+Ken
+
+From poulton Tue Jan  6 15:39:14 1987
+To: walker
+Subject: nrm
+Status: R
+
+If you can't set the time on the file, how about
+opening it for read (which will probably succeed in changing
+the access time to now).  Then, unless the user specified
+some removal time other than the default, you can skip
+the "can't set time" message.
+
+Ken
+
+>  
+>  If you can't set the time on the file, how about
+>  opening it for read (which will probably succeed in changing
+>  the access time to now).  Then, unless the user specified
+>  some removal time other than the default, you can skip
+>  the "can't set time" message.
+>  
+>  Ken
+
+Done.
+However, I think I not only need to open it for read but also
+actually read() at least one byte. (which is what I did)
+
+I also put in the 'file: mode 777 ?' stuff.
+
+The nrm implementation differs from rm in the following way:
+'/bin/rm -ir *' will prompt the user for each and every
+file and directory (recursively).  nrm for simplicity only
+gives you a choice of top level directorys and files.
+(If you interactively delete foo/ you will only be asked
+permission for foo/ and not its children).  This avoids the
+mess of *partially* deleting a directory. This is hard to do
+because I don't unlink any entries until the whole directory is
+verifiably linked over to .gone.
+
+Rick
+
+
+From poulton Tue Jan  6 15:47:16 1987
+To: walker
+Subject: urm
+Status: R
+
+If I give a full pathname
+
+	..../foo/bar/.gone/file
+
+to urm, I'd like it to restore that file to it's starting place:
+
+	..../foo/bar/file
+
+
+Without such a feature, I don't see how to conveniently restore a 
+bunch of files (like ..../foo/bar/.gone/*).
+
+Ken
+
+From poulton Tue Jan  6 15:47:44 1987
+To: walker
+Subject: Re:  nrm bugs
+Status: R
+
+Seems to work okay on special files now!
+
+Ken
+
+***********************************
+3/23/87
+	fixed a bug that made directory deletes crash when
+	the .gone file was not already exsisting. 
+	modified: linkdir.c and savedir.c
+From walker@hpl-yaz Wed Feb 10 20:18 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Wed, 10 Feb 88 20:18:49 pst
+Received: by hpl-yaz.HP.COM; Wed, 10 Feb 88 20:18:36 pst
+Date: Wed, 10 Feb 88 20:18:36 pst
+From: Rick Walker <walker@hpl-yaz>
+Return-Path: <walker@hpl-yaz>
+Message-Id: <8802110418.AA19219@hpl-yaz.HP.COM>
+To: poulton@hpl-yaz
+Subject: nrm fixes
+Cc: farland@hpl-yaz, walker@hpl-yaz
+Status: R
+
+
+Ken, 
+	I got around to doing something about this:
+ 
+
+>  From poulton Tue Jan  6 15:47:16 1987
+>  To: walker
+>  Subject: urm
+>  Status: R
+>  
+>  If I give a full pathname
+>  
+>  	..../foo/bar/.gone/file
+>  
+>  to urm, I'd like it to restore that file to it's starting place:
+>  
+>  	..../foo/bar/file
+>  
+>  
+>  Without such a feature, I don't see how to conveniently restore a 
+>  bunch of files (like ..../foo/bar/.gone/*).
+>  
+>  Ken
+
+	
+Here is the new code (in restore.c) :
+
+	/* the next block of statements allows the user to do  */
+	/* things like "urm .gone/foo*" and have the shell do  */
+	/* proper wildcard expansion... the initial ".gone" is */
+	/* stripped.                                           */
+
+	if ( (index = strindex(path, ".gone/")) != -1 ) {
+		strcpy(path+index,path+index+6); 
+	    /* may be clib dependant !!*/
+	}
+
+Basically I strip out the  first occurrence of ".gone/" that I
+find in the files that you pass to 'urm'.  It seems to do all the
+right stuff.  I later check to make sure you aren't being tricky
+by doing something like: "urm foo/.gone/bar/.gone".
+
+Let me know what you think... since it's such a benign change, 
+I've already installed the changed version on yaz.
+
+In addition, I made a change for Bill so that the error message
+when trying to delete directories without a -r are a little more
+friendly.  It now returns: "nrm: foobar directory, try -r option"
+
+-Rick
+
+From poulton Wed Feb 10 23:06 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Wed, 10 Feb 88 23:06:55 pst
+Received: from hpl-opus.HP.COM by hpl-yaz.HP.COM; Wed, 10 Feb 88 23:06:43 pst
+Received: by hpl-opus.HP.COM; Wed, 10 Feb 88 23:06:31 pst
+Date: Wed, 10 Feb 88 23:06:31 pst
+From: Ken Poulton <poulton>
+Return-Path: <poulton@hpl-opus>
+Message-Id: <8802110706.AA05757@hpl-opus.HP.COM>
+To: walker@hpl-yaz
+Subject: Re:  nrm fixes
+Status: R
+
+Sounds good.
+
+Ken
+
+From poulton@hpl-yaz Mon Feb 29 17:16 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Mon, 29 Feb 88 17:16:37 pst
+Received: by hpl-yaz.HP.COM; Mon, 29 Feb 88 17:16:24 pst
+Date: Mon, 29 Feb 88 17:16:24 pst
+From: Ken Poulton <poulton@hpl-yaz>
+Full-Name: Ken Poulton
+Message-Id: <8803010116.AA15270@hpl-yaz.HP.COM>
+To: walker@hpl-yaz
+Subject: nrm bug
+Status: R
+
+If I do "nrm foo &" and foo is not writable, nrm prompts me,
+even if in the background.  Not nice.  The am-i-background check I have 
+seen is appended...
+
+Ken
+
+>From poulton Tue Feb 16 17:27:17 1988
+To: tai@atom
+Subject: Re: ninstall and interrupts
+Cc: +ninstall
+Status: R
+
+> 	Certainly.  But the only other program that I know of that has this
+> 	problem is rdist.  I once found the code that was responsible, but
+> 
+> What other programs that you know of that trap the interrupt signal and
+> don't have this problem?
+
+compress and rcs (et al).  I have source for compress, appended below.
+
+> 	didn't get around to fixing it.  I think it was in the code that
+> 	sets traps for interrupts.  I found an example from some other program
+> 	that tested for background operation before setting those traps.
+> 
+> If what you are saying is true then if we had job control all programs that
+> caught interrupts must do something special when the process goes from
+> foreground to background and vice versa.  I don't think this is the case.
+
+Well, it is possible to catch SIGTSTP and mess around there, but
+that seems sort of ugly.  In any case, we don't have job control
+and this is a very painful bug.  I have inadvertantly killed ninstall
+three times in as many days (doing system installs).
+
+I append code fragments from some programs that seem to work correctly.
+
+Ken Poulton
+
+
+compress.c:
+
+    if ( (bgnd_flag = signal ( SIGINT, SIG_IGN )) != SIG_IGN ) {
+	signal ( SIGINT, onintr );
+	signal ( SIGSEGV, oops );
+    }
+
+gcc.c:
+  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
+    signal (SIGINT, fatal_error);
+  signal (SIGKILL, fatal_error);
+
+man.c:
+	if (signal(SIGINT, SIG_IGN) == SIG_DFL) {
+		signal(SIGINT, remove);
+		signal(SIGQUIT, remove);
+		signal(SIGTERM, remove);
+	}
+
+
+From walker@hpl-yaz Mon Feb 29 18:54 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Mon, 29 Feb 88 18:54:17 pst
+Received: by hpl-yaz.HP.COM; Mon, 29 Feb 88 18:53:44 pst
+Date: Mon, 29 Feb 88 18:53:44 pst
+From: Rick Walker <walker@hpl-yaz>
+Full-Name: Rick Walker
+Message-Id: <8803010253.AA16189@hpl-yaz.HP.COM>
+To: poulton@hpl-yaz
+Subject: nrm fixed.
+Cc: walker@hpl-yaz
+Status: R
+
+There is a new version on yaz. Let me
+know if it does the right thing... If you
+actually test \rm to see how it behaves, 
+there are some funny things that one
+might not want to emulate! ... rick
+
+From poulton@hpl-milo Tue Mar  1 10:32 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Tue, 1 Mar 88 10:32:54 pst
+Received: from hpl-milo.HP.COM by hpl-yaz.HP.COM; Tue, 1 Mar 88 10:32:41 pst
+Received: by hpl-milo.HP.COM; Tue, 1 Mar 88 10:32:29 pst
+Date: Tue, 1 Mar 88 10:32:29 pst
+From: Ken Poulton <poulton@hpl-milo>
+Full-Name: Ken Poulton
+Message-Id: <8803011832.AA02589@hpl-milo.HP.COM>
+To: walker@hpl-yaz
+Subject: Re:  nrm fixed.
+Status: R
+
+I didn't find any funny behavior in \rm.  I did find that if
+the *directory* is unwritable, nrm fails silently rather than
+telling you about it.  It seems okay if the file is unwritable
+and the ugly prompting from the background behavior is fixed.
+
+Thanks,
+
+Ken
+
+
+From walker@hpl-yaz Tue Mar  1 12:14 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Tue, 1 Mar 88 12:14:45 pst
+Received: by hpl-yaz.HP.COM; Tue, 1 Mar 88 12:14:18 pst
+Date: Tue, 1 Mar 88 12:14:18 pst
+From: Rick Walker <walker@hpl-yaz>
+Full-Name: Rick Walker
+Message-Id: <8803012014.AA18719@hpl-yaz.HP.COM>
+To: poulton@hpl-yaz
+Subject: try try again...
+Cc: walker@hpl-yaz
+Status: R
+
+I think it's closer nowmuch closer now.  By adding onone more varaiable
+of state, everything is nicely decoupled.  Let me know what
+you think... -Rick
+
+From poulton@hpl-milo Tue Mar  1 12:54 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Tue, 1 Mar 88 12:54:08 pst
+Received: from hpl-milo.HP.COM by hpl-yaz.HP.COM; Tue, 1 Mar 88 12:53:55 pst
+Received: by hpl-milo.HP.COM; Tue, 1 Mar 88 12:53:44 pst
+Date: Tue, 1 Mar 88 12:53:44 pst
+From: Ken Poulton <poulton@hpl-milo>
+Full-Name: Ken Poulton
+Message-Id: <8803012053.AA02902@hpl-milo.HP.COM>
+To: walker@hpl-yaz
+Subject: Re:  try try again...
+Status: R
+
+alllllllmost.  Now in the case of writeable-dir, unwritable-file,
+rm silently succeeds (the "background-is-like-'-f'" mode) but
+nrm succeeds with "foo: 444 mode ?".  
+
+If it's going to answer its own question, it shouldn't put up a question
+mark.  Since the point of nrm is safety, I suppose it should warn you of
+444 files that it removes.  Perhaps
+
+    nrm: removing 'foo' with mode 444
+
+would be most useful, even if it's not identical to rm.
+
+Ken
+
+From walker@hpl-yaz Tue Mar  1 18:54 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Tue, 1 Mar 88 18:54:40 pst
+Received: by hpl-yaz.HP.COM; Tue, 1 Mar 88 18:54:15 pst
+Date: Tue, 1 Mar 88 18:54:15 pst
+From: Rick Walker <walker@hpl-yaz>
+Full-Name: Rick Walker
+Message-Id: <8803020254.AA20540@hpl-yaz.HP.COM>
+To: poulton@hpl-yaz
+Subject: slowlywwwly but surely...
+Cc: walker@hpl-yaz
+Status: O
+
+
+I added your suggested message:
+"nrm: removing 'foo' with mode 444"
+
+I also tweaked the behavior when nrm
+is invoked with 'nrm -i foo bar &' (admittedly non-sensical)
+It now prints out:
+
+foo ? n
+bar ? n
+
+to stderr.  /bin/rm under the same test prints:
+
+foo ? bar ?
+
+to stderr (with no \n's (!))
+
+I figure if the program is going to ask itself questions, it should
+answer itself also (for the record).
+
+-rick
+
+
+From poulton@hpl-milo Tue Mar  1 19:49 PST 1988
+Received: from hpl-yaz.HP.COM by hpl-opus.HP.COM; Tue, 1 Mar 88 19:49:24 pst
+Received: from hpl-milo.HP.COM by hpl-yaz.HP.COM; Tue, 1 Mar 88 19:49:10 pst
+Received: by hpl-milo.HP.COM; Tue, 1 Mar 88 19:48:59 pst
+Date: Tue, 1 Mar 88 19:48:59 pst
+From: Ken Poulton <poulton@hpl-milo>
+Full-Name: Ken Poulton
+Message-Id: <8803020348.AA03824@hpl-milo.HP.COM>
+To: walker@hpl-yaz
+Subject: Re:  slowlywwwly but surely...
+Status: R
+
+Sounds good to me.
+
+Ken
+
+From poulton Thu Sep  8 09:19 PDT 1988
+To: walker
+Subject: nrm for 800
+Status: R
+
+I recompiled nrm last night (having my 'rm' alias fail drove me nuts)
+and it seems to work mostly.  I have run into a possible problem,
+however: I tried to nrm -rf a directory and nothing happened.
+No error message, but no change to the dir or the two files in it.
+
+When you get a chance, would you try this out?
+
+Ken
+
+Received: by hpl-quic.HP.COM; Fri, 14 Oct 88 13:13:18 pdt
+Date: Fri, 14 Oct 88 13:13:18 pdt
+From: Rick Walker <walker>
+Full-Name: Rick Walker
+Message-Id: <8810142013.AA24510@hpl-quic.HP.COM>
+To: poulton@hpl-quic
+Subject: nrm fixed
+Cc: BUG.reports
+
+Ken,
+
+I was unable to write in the /nfs/yaz/usr/local/src/cmd/nrm/nrm/800
+directory, (All the files are 644,poulton,staff) so I copied the src
+to /nfs/quic/users/walker/nrm/* and compiled the new version there.
+
+(I was able to do a make install ok, since I own /usr/local/bin/*rm).
+
+It appears to pass all the appropriate tests (with no modifications to the
+350 source).  You might want to copy the stuff in quic:/users/walker/nrm
+to the 800 src directory on yaz. - also, did you intend to also keep the
+source on quic?  They seem to have been installed in 
+/nfs/quic/user/local/src/cmd/nrm/nrm...
+
+-Rick 
+
+
+
+From poulton@hpl-milo Fri Oct 14 13:35 PDT 1988
+Received: from hpl-quic.HP.COM by hpl-opus.HP.COM; Fri, 14 Oct 88 13:34:53 pdt
+Received: from hpl-milo.HP.COM by hpl-quic.HP.COM; Fri, 14 Oct 88 13:42:04 pdt
+Received: by hpl-milo.HP.COM; Fri, 14 Oct 88 13:34:29 pdt
+Date: Fri, 14 Oct 88 13:34:29 pdt
+From: Ken Poulton <poulton@hpl-milo>
+Full-Name: Ken Poulton
+Message-Id: <8810142034.AA28815@hpl-milo.HP.COM>
+To: walker@hpl-quic
+Subject: Re:  nrm fixed
+Status: R
+
+> I was unable to write in the /nfs/yaz/usr/local/src/cmd/nrm/nrm/800
+> directory, (All the files are 644,poulton,staff) so I copied the src
+> to /nfs/quic/users/walker/nrm/* and compiled the new version there.
+
+Whoops, sorry.  
+
+For future reference: you could do a "mv 800 800.old" to get it 
+out of the way.
+
+> It appears to pass all the appropriate tests (with no modifications to the
+> 350 source).  You might want to copy the stuff in quic:/users/walker/nrm
+> to the 800 src directory on yaz. 
+
+If there are no changes other than recompilation, I will skip it.
+
+>                                    - also, did you intend to also keep the
+> source on quic?  They seem to have been installed in 
+> /nfs/quic/user/local/src/cmd/nrm/nrm...
+
+If you cd to /usr/local/src/cmd/nrm/nrm while logged in to quiche, and
+do "/bin/pwd" you will be informed that this is really
+/nfs/yaz/usr/local/src/cmd/nrm/nrm.
+     ^^^
+"ll /usr/local" reveals that some of /usr/local/xxx on Quiche points to
+/nfs/yaz/usr/local/xxx.
+
+Ken
+
+From poulton@hpl-milo Fri Oct 14 13:35 PDT 1988
+Received: from hpl-milo.HP.COM by hpl-opus.HP.COM; Fri, 14 Oct 88 13:35:34 pdt
+Received: by hpl-milo.HP.COM; Fri, 14 Oct 88 13:35:21 pdt
+Date: Fri, 14 Oct 88 13:35:21 pdt
+From: Ken Poulton <poulton@hpl-milo>
+Full-Name: Ken Poulton
+Message-Id: <8810142035.AA28833@hpl-milo.HP.COM>
+To: walker@hpl-milo
+Subject: nrm
+Status: R
+
+I forgot to say:
+
+        Thanks.
+
+Ken
+
+
+From walker@hpl-quic Wed Oct 12 20:02 PDT 1988
+Received: from hpl-quic.HP.COM by hpl-opus.HP.COM; Wed, 12 Oct 88 20:02:14 pdt
+Received: by hpl-quic.HP.COM; Wed, 12 Oct 88 20:08:38 pdt
+Date: Wed, 12 Oct 88 20:08:38 pdt
+From: Rick Walker <walker@hpl-quic>
+Full-Name: Rick Walker
+Message-Id: <8810130308.AA20187@hpl-quic.HP.COM>
+To: poulton@hpl-quic
+Subject: Re:  nrm for 800
+Cc: walker@hpl-quic
+Status: R
+
+Ken, 
+
+I logged onto quiche for the first time in a long time.  I found the 
+following message waiting for me:
+
+> I recompiled nrm last night (having my 'rm' alias fail drove me nuts)
+> and it seems to work mostly.  I have run into a possible problem,
+> however: I tried to nrm -rf a directory and nothing happened.
+> No error message, but no change to the dir or the two files in it.
+> When you get a chance, would you try this out?
+> Ken
+
+It might be good if messages originated on quic somehow got forwarded back
+to opus for delivery...
+
+Anyway, sorry for the delay in replying to your message. :-) I found a 
+possibly related bug in nrm that was caused by the read(2) call failing
+across nfs mounts.  I have changed all directory accesses to use the
+<ndir.h> routines.  (See the posting in general) This seemed to fix my 
+problem.  There's a good chance that if you recompile, it will fix what 
+you saw too.  BTW, the -f option inhibits error messages... you might
+want to see what nrm says with just 'nrm -r dir'.
+
+Also, was it a local directory or an nfs directory?
+
+Rick
+
+
+-----------------------------------
+Proposal to make sequenced backup copies:
+
+When removing file "foo", the deleted file is moved to
+
+.gone/foo]1
+
+When foo is removed a second time, ".gone/foo]1" is moved to
+".gone/foo]2" and foo is saved as ".gone/foo]1".
+
+The sequence characters are "[1-9][A-Z][a-z]".
+
+.gone/foo]1
+.gone/foo]2
+.gone/foo]3
+.gone/foo]4
+...
+
+A new option "-s <number>" is added to turn on sequencing.
+
+---------------------------------------
+
+Subject: nrm bug
+From:    Ken Poulton <poulton@zonker.hpl.hp.com>
+Date:    Tue, 22 Mar 1994 17:48:03 PST
+To:      walker@zonker.hpl.hp.com
+--
+Do
+        date >foo
+        nrm foo
+        urm foo
+        ln foo .gone/foo
+to make a file that is already linked into .gone.  Now
+        nrm foo
+silently fails to remove foo.
+
+Ken
