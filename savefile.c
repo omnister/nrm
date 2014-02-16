@@ -1,7 +1,7 @@
 #include "nrm.h"
 
 savefile(path)      /* mv file from path to .gone dir */
-char    *path;         /* tries real hard to unlink pre-existing dst file */
+char    *path;      /* tries real hard to unlink pre-existing dst file */
 {
     char    dstfile[BUFLEN];
     char    dstdir[BUFLEN];
@@ -10,47 +10,64 @@ char    *path;         /* tries real hard to unlink pre-existing dst file */
 
     strcpy(dir, path);
     basename(dir, file); /* puts dir in dir and file in file */
-    /* called with full path in first arg */
+                         /* called with full path in first arg */
 
     sprintf(dstdir, "%s%s", dir, ".gone");
     sprintf(dstfile, "%s/%s", dstdir, file);
 
-    if (link(path, dstfile)) { /* problems... */
-        if (errno == EEXIST) {  /* file already exists */
-            if (expunge(dstfile)) {  /* make sure dest is gone */
+#ifdef RENAME
+    if (rename(path, dstfile)) {    /* problems... */
+#else
+        if (link(path, dstfile)) {      /* problems... */
+#endif RENAME
+
+            if (errno == EEXIST) {  /* file already exists */
+                if (expunge(dstfile)) {  /* make sure dest is gone */
+                    return(ERR);
+                }
+            } else if (errno == ENOENT)  { /* directory doesn't exist */
+				/* printf("errno = %d\n",errno); */
+                if ((mkdir(dstdir, 0777) == -1) && errno != EEXIST) {
+                    errout("%s: %s not removed: can't create %s",
+                        progname, path, dstdir);
+                    return(ERR);
+                }
+                if (chmod(dstdir, 0777)) {
+                    errout("%s: error in setting mode of .gone:",
+						progname, "", "");
+                    /* return(ERR); */ /* not fatal */
+                }
+            } else {
+                errout("%s: %s not removed: can't link with %s",
+                    progname, path, dstfile);
+                return(ERR);
+            } 
+
+#ifdef RENAME
+            if (rename(path, dstfile)) {    /* so try again ...    */
+#else
+                if (link(path, dstfile)) {      /* so try again ...    */
+#endif RENAME
+                    errout("%s: %s not removed: can't link with %s",
+                        progname, path, dstfile);
+                    return(ERR);
+                }
+            }
+
+            /* don't leave sitting around */
+            if (updatetime(dstfile, gtime)) {
+                /* expunge(dstfile);  */
                 return(ERR);
             }
-        } else if (errno == ENOENT) { /* directory doesn't exist */
-            if ((mkdir(dstdir, '\777') == -1) && errno != EEXIST) {
-                errout("%s: %s not removed: can't create %s",
-                    progname, path, dstdir);
+
+
+#ifndef RENAME
+            if (unlink(path)) {
+                errout("%s: %s not removed: can't unlink", progname, path, "");
+                expunge(dstfile); /* don't leave sitting around */
                 return(ERR);
             }
-        } else {
-            errout("%s: %s not removed: can't link with %s",
-                progname, path, dstfile);
-            return(ERR);
+#endif RENAME
+
+            return(0);
         }
-
-        if (link(path, dstfile)) {   /* so try again ...    */
-            errout("%s: %s not removed: can't link with %s",
-                progname, path, dstfile);
-            return(ERR);
-        }
-    }
-
-    if (updatetime(dstfile, gtime)) {
-        expunge(dstfile); /* don't leave sitting around */
-        return(ERR);
-    }
-
-    if (unlink(path)) {
-        errout("%s: %s not removed: can't unlink", progname, path, "");
-        expunge(dstfile); /* don't leave sitting around */
-        return(ERR);
-    }
-
-    return(0);
-}
-
-

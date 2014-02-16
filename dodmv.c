@@ -7,6 +7,11 @@ char    *src, *dst;    /* deletes dst first !!! */
         errout("%s: can't delete old %s", progname, dst, "");
     }
 
+#ifdef RENAME
+    if (!(rename(src, dst))) {
+        return(0);
+    }
+#else
     if (!(linkdir(src, dst))) {
         if (!expunge(src))   /* only kill src if linkdir ok! */
             return(0);
@@ -14,6 +19,8 @@ char    *src, *dst;    /* deletes dst first !!! */
         expunge(dst);       /* junk hanging around */
         return(1);
     }
+#endif RENAME
+
     return(1);              /* unreachable but keeps lint happy */
 }
 

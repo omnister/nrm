@@ -28,24 +28,30 @@ char    *dstdir;           /* returns 1 on error   */
         return(1);
     }
 
-    if ((mkdir(dstdir, '\777') == -1) && errno != EEXIST) {
+    if ((mkdir(dstdir, 0777) == -1) && errno != EEXIST) {
         errout("%s: %s not removed1: can't create %s", progname, srcdir, dstdir);
         return(1);
     }
 
-    for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
-        if ((int) dp->d_fileno) {
-            sprintf(srcname, "%s/%s", srcdir, dp->d_name);
-            sprintf(dstname, "%s/%s", dstdir, dp->d_name);
-            if (stat(srcname, &stbuf) == -1) {
-                errout("%s: can't access %s", progname, srcname, "");
-                return(1);
-            }
+	if (chmod(dstdir, 0777)) {
+		errout("%s: error in setting mode of .gone:",
+			progname, "", "");
+		/* return(ERR); */ /* not fatal */
+	}
 
-            if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {  /* it's a dir */
-                if (strcmp(dp->d_name, "..")
-                     && strcmp(dp->d_name, ".")) {
-                    /* && (strindex(dp->d_name,".gone") == -1))  */
+for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
+if ((int) dp->d_fileno) {
+	sprintf(srcname, "%s/%s", srcdir, dp->d_name);
+	sprintf(dstname, "%s/%s", dstdir, dp->d_name);
+	if (lstat(srcname, &stbuf) == -1) {
+		errout("%s: can't access %s", progname, srcname, "");
+		return(1);
+	}
+
+	if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {  /* it's a dir */
+		if (strcmp(dp->d_name, "..")
+			 && strcmp(dp->d_name, ".")) {
+			/* && (strindex(dp->d_name,".gone") == -1))  */
                     if (linkdir(srcname, dstname)) {
                         return(1);
                     }

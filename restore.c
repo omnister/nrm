@@ -52,12 +52,12 @@ char    *path;
 
     if (dirflag) {   /* must be a directory */
         if (dodmv(filesrc, path)) {
-            errout("%s: can't rename %s", progname, path, "");
+            errout("%s: can't rename directory %s", progname, path, "");
             return(2 * fflag);
         }
     } else {        /* must be a file */
         if (dofmv(filesrc, path)) {
-            errout("%s: can't rename %s", progname, path, "");
+            errout("%s: can't rename file %s", progname, path, "");
             return(2 * fflag);
         }
     }

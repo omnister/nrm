@@ -4,10 +4,10 @@
 #include <errno.h>
 #include <ndir.h>
 
-expunge(path)       /* recursive file/directory deleter */
+expunge(path)          /* recursive file/directory deleter */
 char    *path;         /* returns 0 if ok, -1 if can't open, */
-{                   /* 1,2,3... for # of unremovable subdirs */
-    /* roughly equ. to /bin/rm -rf  */
+{                      /* 1,2,3... for # of unremovable subdirs */
+                       /* roughly equ. to /bin/rm -rf  */
     int errflag;
     struct direct *dp;
     DIR * dirp;

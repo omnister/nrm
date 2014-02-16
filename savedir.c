@@ -17,12 +17,29 @@ char    *path;         /* deletes dst first !!! */
         return(ERR);
     }
 
+    /* make sure .gone exists before calling linkdir */
     sprintf(sdir, "%s%s", dir, ".gone");
-    if ((mkdir(sdir, '\777') == -1) && errno != EEXIST) {
+    if ((mkdir(sdir, 0777) == -1) && errno != EEXIST) {
         errout("%s: %s not removed: can't create %s", progname, path, sdir);
         return(1);
-    }   /* make sure .gone exists before calling linkdir */
+	}
 
+	if (chmod(sdir, 0777)) {
+		errout("%s: error in setting mode of .gone:",
+			progname, "", "");
+		/* return(ERR); */ /* not fatal */
+	}
+
+#ifdef RENAME                           /* use new rename(2) call */
+    if (!(rename(path, dstfile))) {
+        if (updatetime(dstfile, gtime)) {
+            errout("%s: can't set time on %s", progname, path);
+            return(ERR);
+        }
+        return(0);
+    }
+
+#else                                   /* use old method */
     if (!(linkdir(path, dstfile))) {
         if (!expunge(path)) {    /* only kill path if linkdir ok! */
             if (updatetime(dstfile, gtime)) {
@@ -34,6 +51,8 @@ char    *path;         /* deletes dst first !!! */
         expunge(dstfile);       /* junk hanging around */
         return(1);
     }
+
+#endif RENAME
     return(ERR);
 }
 

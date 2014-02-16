@@ -16,10 +16,10 @@ main()
 */
 
 
-void basename(dir, file)     /* called with full dir name in "dir"           */
-char    *dir, *file;       /* strips trailing '/''s                  */
-{                       /* if called w/("/usr/local/bin/",s2) returns:   */
-    /* with (s1=>/usr/local/,s2=>bin)                */
+void basename(dir, file)     /* called with full dir name in "dir"         */
+char    *dir, *file;         /* strips trailing '/''s                      */
+{                            /* if called w/("/usr/local/bin/",s2) returns:*/
+                             /* with (s1=>/usr/local/,s2=>bin)             */
     char    s1[BUFLEN];
     char    s2[BUFLEN];
     char    *p1, *p;

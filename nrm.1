@@ -88,7 +88,7 @@ does not use \f3system\fP(2) or \f3exec\fP(2) so is significantly
 faster than similiar script-based implementations. 
 .PP
 .I Nrm\^
-will work over RFA.
+works over RFA.
 .PP
 This renaming strategy was used to  give a good summary 
 when using \f3du\fP(1) to evaluate freed-up disk space. 
@@ -114,7 +114,9 @@ Returns 0 if successful, 2 on
 errors.
 It is forbidden to remove the file "\f3..\fP",
 the file "\f3.\fP" and the
-files "\f3.gone*\fP".  
+files "\f3.gone/*\fP".  The  
+.B \-t
+option does not work on symbolic links.
 .PP
 .SH AUTHOR
 Rick Walker ...hplabs!hpl-opus!walker 

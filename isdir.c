@@ -7,7 +7,7 @@ char    *fname;
 {
     struct stat stbuf;
 
-    if (stat(fname, &stbuf) == -1) {
+    if (lstat(fname, &stbuf) == -1) {
         return(-1);
     }
     if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {

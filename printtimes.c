@@ -8,7 +8,7 @@ char    *path;
 {
     extern int  aflag, cflag, mflag;
     struct stat buf;
-    if (stat(path, &buf) == -1) {
+    if (lstat(path, &buf) == -1) {
         errout("%s: stat error in printtime()", progname, "", "");
         return(1);
     }

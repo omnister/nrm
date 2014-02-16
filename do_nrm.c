@@ -9,15 +9,16 @@ char    *fname;
     extern int  errno;
     extern int  iflag, fflag, rflag, bflag;
     struct stat stbuf;
-    int dirflag;
+    int dirflag, symflag;
 
     errno = 0;      /* clear errno so no bogus msg's */
 
-    if (stat(fname, &stbuf) == -1) {
+    if (lstat(fname, &stbuf) == -1) {
         errout("%s: can't access %s", progname, fname, "");
         return(2 * fflag);
     }
     dirflag =  ((stbuf.st_mode & S_IFMT) == S_IFDIR);
+    symflag =  ((stbuf.st_mode & S_IFMT) == S_IFLNK);
 
     if ((strindex(fname, ".gone") != -1) || 
         !strcmp(fname, "..") || 
@@ -36,7 +37,7 @@ char    *fname;
         if (!pick(fname))
             return(0);
     } else if (fflag ) {     /* verbose mode */
-        if (access(fname, 02) < 0) {
+        if (access(fname, 02) < 0 && !symflag ) {
             if (!bflag)  {   /* not in background */
                 fprintf(stderr, "%s: %o mode", fname, stbuf.st_mode & 0777);
                 if (!pick(""))

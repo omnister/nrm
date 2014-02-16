@@ -7,12 +7,12 @@ int rflag = 0;
 int fflag = 1;
 int bflag = 0;      /* internal flag to tell if we're in the background */
 int gtime = 0;      /* default gracetime offset for atimes. */
-					/* the (3 day) offset is built into     */
-					/* the nrm.cleanup script.  It deletes  */
-					/* files whose atime is older than      */
-					/* GRACETIME days   */
+/* the (3 day) offset is built into     */
+/* the nrm.cleanup script.  It deletes  */
+/* files whose atime is older than      */
+/* GRACETIME days   */
 
-static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.14 88/11/02 17:30:16 walker Exp $";
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: /va/walker/bin/src/nrm/sharfile,v 1.10 88/03/03 12:12:12 walker Exp $";
 
 main(argc, argv)    /* nrm: recoverably delete files */
 int argc;

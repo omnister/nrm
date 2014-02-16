@@ -13,12 +13,17 @@ NLINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
 ULINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
 	basename.c expunge.c linkdir.c updatetime.c\
 	urmmain.c isdir.c dodmv.c dofmv.c restore.c
-CCFLAGS=-O
 SYSBIN=/usr/local/bin/
 MANDIR=/usr/local/man/man1/
 CATDIR=/usr/local/man/cat1/
 CLEANUP=/etc
 SRC=/usr/local/src/cmd/nrm/nrm/
+
+# if your system has the berkely rename(2) function available,
+# use the RENAME define for CCFLAGS below:
+
+#CCFLAGS=-O
+CCFLAGS=-O -DRENAME
 
 all: nrm urm gtime
 
@@ -53,9 +58,14 @@ lint: $(NLINTSRC) $(ULINTSRC)
 
 $(HSOURCES):nrm.h
 
+.c.o:
+	cc -c $(CCFLAGS) $<
+
 ##### other stuff not included in shar:   
-calls: 
+ncalls: 
 	cat $(NLINTSRC) | calls -
+ucalls: 
+	cat $(ULINTSRC) | calls -
 rmdir: killdir.o killdirmain.o isdir.o errout.o
 	cc killdir.o killdirmain.o isdir.o errout.o $(CCFLAGS) -o rmdir
 rlist: rlist.o rmain.o isdir.o

@@ -29,7 +29,7 @@ find2 / -name '.gone' -print 2>/dev/null |
 while read file
 do
     #kill all old files 
-    find $file -type f -atime +$GRACETIME\
+    find $file ! -type d -atime +$GRACETIME\
     -exec /bin/rm -f {} \; \
     -print \
     >> $TEMPFILE 2>/dev/null
