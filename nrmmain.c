@@ -23,8 +23,6 @@ int gtime = 0;      /* default gracetime offset for atimes. */
                     /* GRACETIME days   */
 
 
-static char id[] = "@(#) Bugs to Rick Walker, walker@opus.hpl.hp.com $Header: /usr/local/src/cmd/nrm/nrmmain.c,v 1.1 1999/09/22 18:45:12 walker Exp walker $";
-
 int main (argc, argv) /* nrm: recoverably delete files */
 int argc;
 char **argv;
@@ -124,12 +122,12 @@ char **argv;
         printf("  -h, --help            display this help and exit\n");
         printf("      --version         output version information and exit\n");
         printf("\n");
-        printf("Report bugs to walker@opus.hpl.hp.com\n");  
+        printf("Report bugs to walker@omnisterra.com\n");  
         exit(0);
     }
 
     if (vflag) {
-        printf("nrm: Linux version 0.1 (walker@opus.hpl.hp.com)\n");
+        printf("nrm: Linux version 0.1 (walker@omnisterra.com)\n");
         exit(0);
     }
 
