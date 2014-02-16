@@ -1,0 +1,1281 @@
+
+# This is a shell archive.  Remove anything before this line,
+# then unpack it by saving it in a file and typing "sh file".
+#
+# Wrapped by walker at hpl-yaz on Tue Mar  1 18:06:38 1988
+#
+# This archive contains:
+#	basename.c	linkdir.c	expunge.c	errout.c	
+#	do_nrm.c	nrmmain.c	urmmain.c	restore.c	
+#	updatetime.c	gtime.c		printtimes.c	efopen.c	
+#	strindex.c	ttyin.c		isdir.c		pick.c		
+#	nrm.h		dofmv.c		dodmv.c		savedir.c	
+#	savefile.c	nrm.1		nrm.cleanup	make_nrm.h	
+#	makefile	
+#
+# Error checking via wc(1) will be performed.
+
+LANG=""; export LANG
+
+echo x - basename.c
+cat >basename.c <<'@EOF'
+#include <string.h>
+#include "nrm.h"
+
+/* a  little driver for testing ... */
+/*
+main()
+{
+    char buf[BUFLEN];
+    char buf2[BUFLEN];
+
+    while(scanf("%s",buf) != EOF) {
+        basename(buf,buf2);
+        printf("dir = \"%s\", file = \"%s\"\n",buf,buf2);
+    }
+}
+*/
+
+
+void basename(dir, file)     /* called with full dir name in "dir"           */
+char *dir, *file;       /* strips trailing '/''s                  */
+{                       /* if called w/("/usr/local/bin/",s2) returns:   */
+    /* with (s1=>/usr/local/,s2=>bin)                */
+    char s1[BUFLEN];
+    char s2[BUFLEN];
+    char *p1,*p;
+    int junk;   /* used to keep track of space left in strtok buffer */
+
+    strcpy(s1,dir);
+    p1 = s1;    /* p1 is pointer to private copy of dir string */
+
+    while ((p = strtok(p1,"/")) != NULL) {
+        p1 = NULL;  /* makes strtok work ... look it up! */
+        /* next line makes things like: "a/b/" work  */
+        /* without it the final "/" goofs things up  */
+        junk = strlen(dir)-(strlen(p)+(p-s1));
+        strcpy(s2,p);
+    } /* s2 now points to stripped file name */
+    dir[(strlen(dir)-strlen(s2))-junk] = '\0'; /* just path alone */
+    strcpy(file,s2);
+}
+@EOF
+if test "`wc -lwc <basename.c`" != '     40    161   1194'
+then
+	echo ERROR: wc results of basename.c are `wc -lwc <basename.c` should be      40    161   1194
+fi
+
+chmod 644 basename.c
+
+echo x - linkdir.c
+cat >linkdir.c <<'@EOF'
+#include <stdio.h>
+#include <sys/types.h>  /* needed for stat */
+#include <sys/dir.h>
+#include <fcntl.h>
+#include <sys/stat.h>   /* needed for stat */
+#include "nrm.h"
+
+linkdir(srcdir,dstdir)  /* recursive directory linker */
+char *srcdir;           /* returns 0 if no problems  */
+
+char *dstdir;           /* returns 1 on error   */
+{                       /* assumes dstdir does not exist */
+
+    int fd;             /* assumes that .gone directory exists */
+    extern int errno;
+    extern int iflag, fflag;
+    struct direct nbuf;
+    struct stat stbuf;
+    char srcname[BUFLEN];
+    char dstname[BUFLEN];
+    extern char *progname;
+
+    if (srcdir[0] == '\0')      /* current directory    */
+        srcdir = ".";
+
+    if ((fd=open(srcdir, O_RDONLY)) == -1) {
+        errout("%s: %s not removed: can't open",progname,srcdir,"");
+        return(1);
+    }
+
+    if((mkdir(dstdir,'\777') == -1) && errno != EEXIST) {
+        errout("%s: %s not removed1: can't create %s",progname,srcdir,dstdir);
+        return(1);
+    }
+
+    while (read(fd,(char *) &nbuf,sizeof(struct direct)) > 0) {
+        if (nbuf.d_ino) {
+            sprintf(srcname,"%s/%s",srcdir,nbuf.d_name);
+            sprintf(dstname,"%s/%s",dstdir,nbuf.d_name);
+
+            if(stat(srcname, &stbuf) == -1) {
+                errout("%s: can't access %s",progname,srcname,"");
+                return(1);
+            }
+
+            if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {  /* it's a dir */
+                if(strcmp(nbuf.d_name,"..")
+                    && strcmp(nbuf.d_name,".")) {
+                    /* && (strindex(nbuf.d_name,".gone") == -1))  */
+                    if (linkdir(srcname,dstname))
+                        return(1);
+                }
+            } else {                                    /* it's a file */
+                if(link(srcname,dstname)) {
+                    errout("%s: %s not removed: can't move %s", 
+                        progname,srcdir,srcname);
+                    return(1);
+                }
+                if(updatetime(dstname,gtime))
+                    return(1);
+            }
+        }
+    }
+    if(updatetime(dstdir,gtime)) {
+        return(1);
+    }
+    close(fd);
+    return(0);
+}
+@EOF
+if test "`wc -lwc <linkdir.c`" != '     69    206   2204'
+then
+	echo ERROR: wc results of linkdir.c are `wc -lwc <linkdir.c` should be      69    206   2204
+fi
+
+chmod 644 linkdir.c
+
+echo x - expunge.c
+cat >expunge.c <<'@EOF'
+#include "nrm.h"
+#include <sys/types.h>
+#include <sys/dir.h>
+#include <fcntl.h>
+#include <errno.h>
+
+expunge(path)   /* recursive file/directory deleter */
+char *path;     /* returns 0 if ok, -1 if can't open, */
+{                   /* 1,2,3... for # of unremovable subdirs */
+    int fd;         /* roughly equ. to /bin/rm -rf  */
+    int errflag;
+    struct direct nbuf;
+    char name[BUFLEN];
+    extern int errno;
+    extern char *progname;
+    errflag = 0;
+
+    if (path[0] == '\0')    {       /* current directory    */
+        errflag = 0;
+        errout("%s: expunge called with null argument",progname,"","");
+        return(errflag++);
+    }
+
+    if(unlink(path) == 0) {     /* assume reg. file so use unlink call */
+        return(0);
+    } else {                    /* some problem */
+        if (errno == ENOENT) /* file didn't exist */
+            return(0);  /* no problem, file didn't exist */
+        else if (errno != EPERM) { /* not a directory */
+            errout("%s: %s not removed: can't unlink ",progname,path,"");
+            return(errflag++);
+        }
+    }           /* falls through here only if path is a directory */
+
+    if ((fd=open(path, O_RDONLY)) == -1) {
+        errout("%s: %s not removed: can't read",progname,path,"");
+        return(errflag++);
+    }
+    while (read(fd,(char *) &nbuf,sizeof(struct direct)) > 0) {
+        if (nbuf.d_ino) {
+            sprintf(name,"%s/%s",path,nbuf.d_name);
+            if(strcmp(nbuf.d_name,"..") && strcmp(nbuf.d_name,".")) {
+                errflag += expunge(name);
+            }
+        }
+    }
+    close(fd);
+    if(rmdir(path) == -1) {
+        errout("%s: %s not removed: can't unlink",progname,path,"");
+        errflag++;
+    }
+    return(errflag);
+}
+@EOF
+if test "`wc -lwc <expunge.c`" != '     53    203   1738'
+then
+	echo ERROR: wc results of expunge.c are `wc -lwc <expunge.c` should be      53    203   1738
+fi
+
+chmod 644 expunge.c
+
+echo x - errout.c
+cat >errout.c <<'@EOF'
+#include "nrm.h"
+
+void errout(s1,s2,s3,s4) /* print errors conditionally on fflag & iflag*/
+char *s1,*s2,*s3,*s4;
+{
+    extern int iflag;
+    extern int fflag;
+    extern int errno;
+    extern int sys_nerr;
+    extern char *sys_errlist[];
+
+    if(fflag || iflag) {    /* verbose or interactive */
+        fprintf(stderr,s1,s2,s3,s4);
+        if (errno > 0 && errno < sys_nerr)
+            fprintf(stderr, ": %s", sys_errlist[errno]);
+        fprintf(stderr,"\n");
+    }
+}
+@EOF
+if test "`wc -lwc <errout.c`" != '     18     55    472'
+then
+	echo ERROR: wc results of errout.c are `wc -lwc <errout.c` should be      18     55    472
+fi
+
+chmod 644 errout.c
+
+echo x - do_nrm.c
+cat >do_nrm.c <<'@EOF'
+#include "nrm.h"
+#include <sys/types.h> /* for stat */
+#include <sys/stat.h>  /* for stat */
+
+do_nrm(fname)
+char *fname;
+{
+    extern char *progname;
+    extern int errno;
+    extern int iflag,fflag,rflag,bflag;
+    struct stat stbuf;
+    int dirflag;
+
+    errno = 0;      /* clear errno so no bogus msg's */
+
+    if(stat(fname, &stbuf) == -1) {
+        errout("%s: can't access %s",progname,fname,"");
+        return(2*fflag);
+    }
+    dirflag =  ((stbuf.st_mode & S_IFMT) == S_IFDIR);
+
+    if ((strindex(fname, ".gone") != -1) ||
+        !strcmp(fname, "..") ||
+        !strcmp(fname, ".")) { /* prevents nasty recursion ! */
+        fprintf(stderr,"%s: cannot remove %s\n",progname,fname);
+        return(0);
+    }
+    if (dirflag && !rflag) {
+        fprintf(stderr,"%s: %s directory, try -r option\n",progname,fname);
+        return(2);
+    }
+
+    if (iflag) {
+        if (dirflag)
+            fprintf(stderr,"directory ");
+        if (!pick(fname))
+            return(0);
+    } else if (fflag ) {     /* verbose mode */
+        if (access(fname,02) < 0) {
+            if(!bflag)  {   /* not in background */
+                fprintf(stderr,"%s: %o mode",fname,stbuf.st_mode&0777);
+                if (!pick(""))
+                    return(0);
+            } else {        /* in background */
+                fprintf(stderr,"%s: removing \'%s\' with %o mode\n",
+                    progname,fname,stbuf.st_mode&0777);
+            }
+        }
+    }
+
+    if (dirflag) {  /* file is directory */
+        if (savedir(fname)) {
+            return(2*fflag);
+        }
+    } else {        /* file is not a directory */
+        if (savefile(fname)) {
+            return(2*fflag);
+        }
+    }
+    return(0);
+}
+@EOF
+if test "`wc -lwc <do_nrm.c`" != '     61    184   1709'
+then
+	echo ERROR: wc results of do_nrm.c are `wc -lwc <do_nrm.c` should be      61    184   1709
+fi
+
+chmod 644 do_nrm.c
+
+echo x - nrmmain.c
+cat >nrmmain.c <<'@EOF'
+#include "nrm.h"
+#include <signal.h>
+
+char *progname;
+int iflag = 0;
+int rflag = 0;
+int fflag = 1;
+int bflag = 0;      /* internal flag to tell if we're in the background */
+int gtime = 0;      /* default gracetime offset for atimes. */
+/* the (3 day) offset is built into     */
+/* the nrm.cleanup script.  It deletes  */
+/* files whose atime is older than      */
+/* GRACETIME days   */
+
+main(argc, argv)    /* nrm: recoverably delete files */
+int argc;
+char *argv[];
+{
+    extern int optind;  /* argv index of next option */
+    extern int opterr;
+    extern char *optarg;
+    int c;
+    int errflag;
+    int temp, returncode;
+
+    errflag = 0;
+    opterr = 0;     /* disables getopt's error msg's */
+
+    progname = argv[0];
+
+    while ((c = getopt(argc, argv, "ifrt:")) != EOF)
+        switch (c) {
+        case 'i':
+            iflag++;
+            break;
+        case 'f':
+            fflag = 0;
+            break;
+        case 'r':
+            rflag++;
+            break;
+        case 't':
+            gtime = (atoi(optarg)-GRACETIME);
+            break;
+        case '?':
+            errflag++;
+            break;
+        }
+    /* bug fix: find out if we are in the background... if so
+    ** then set the background flag to prevent asking any questions...
+    ** (we still print out certain errors (a la /bin/rm)    */
+
+    if (signal(SIGINT, SIG_IGN) == SIG_IGN ) {
+        bflag = 1;
+    }
+
+    if ((errflag && fflag) || (argc <= 1)) {
+        fprintf(stderr,"usage: %s [-fir][-t time] file ...\n",progname);
+        exit(2);
+    } else {
+        returncode = 0;
+        for(; optind < argc; optind++) {
+            temp = do_nrm(argv[optind]);
+            if (temp > returncode)
+                returncode = temp;
+        }
+    }
+    return(returncode);
+}
+@EOF
+if test "`wc -lwc <nrmmain.c`" != '     69    247   1769'
+then
+	echo ERROR: wc results of nrmmain.c are `wc -lwc <nrmmain.c` should be      69    247   1769
+fi
+
+chmod 644 nrmmain.c
+
+echo x - urmmain.c
+cat >urmmain.c <<'@EOF'
+#include "nrm.h"
+
+char    *progname;  /* program name for error message */
+int fflag = 1;
+int iflag = 0;      /* dummy global for isdir() */
+int bflag = 0;      /* dummy global for isdir() */
+
+main(argc, argv)    /* urm: restore deleted files/dirs */
+int argc;
+char *argv[];
+{
+    extern int optind;  /* argv index of next option */
+    extern int opterr;
+    int c;
+    int errflag = 0;
+    int temp, returncode;
+    opterr = 0;     /* disables getopt's error msg's */
+
+    progname = argv[0];
+    if (argc == 1)
+        errflag++;  /* print usage if no com args   */
+    while ((c = getopt(argc, argv, "f")) != EOF)
+        switch (c) {
+        case 'f':
+            fflag = 0;
+            break;
+        case '?':
+            errflag++;
+            break;
+        }
+    if (errflag && fflag) {
+        fprintf(stderr,"usage: %s [-f] file ...\n",progname);
+        exit(2);
+    }
+
+    else {
+        returncode = 0;
+        for(; optind < argc; optind++) {
+            temp = restore(argv[optind]);
+            if (temp > returncode)
+                returncode = temp;
+        }
+    }
+    return(returncode);
+}
+@EOF
+if test "`wc -lwc <urmmain.c`" != '     45    154   1113'
+then
+	echo ERROR: wc results of urmmain.c are `wc -lwc <urmmain.c` should be      45    154   1113
+fi
+
+chmod 644 urmmain.c
+
+echo x - restore.c
+cat >restore.c <<'@EOF'
+#include "nrm.h"
+#define FEXISTS 0
+
+int gtime = 0;  /* amount of offset (days) used when restoring times */
+restore(path)   /* restore file/dir @ path: return zero if ok */
+char *path;
+{
+    extern char *progname;
+    extern int errno;
+    extern int fflag;
+    char filesrc[BUFLEN];
+    char dir[BUFLEN];
+    char file[BUFLEN];
+    int index;
+    int dirflag;            /* used to keep return codes from isdir() */
+    errno = 0;              /* clear errno so no bogus msg's */
+
+    /* the next block of statements allows the user to do  */
+    /* things like "urm .gone/foo*" and have the shell do  */
+    /* proper wildcard expansion... the initial ".gone" is */
+    /* stripped.                                           */
+
+    if ( (index = strindex(path, ".gone/")) != -1 ) {
+        strcpy(path+index,path+index+6);
+        /* may be system dependant !!*/
+    }
+
+    if ((strindex(path, ".gone") != -1) ||
+        !strcmp(path, "..") ||
+        !strcmp(path, ".")) {
+        errout("%s: can't restore %s",progname,path,"");
+        return(0);
+    }
+
+    strcpy(dir, path);
+    basename(dir, file);    /* puts dir in dir and file in file */
+    /* called with full path in first arg */
+
+    sprintf(filesrc,"%s%s/%s",dir,".gone",file);
+    if ((dirflag = isdir(filesrc)) == -1) {
+        errno = 0;  /* make sure errout doesn't print system err msg */
+
+        errout("deleted file: %s does not exist",path,"","");
+        return(2*fflag);
+    }
+
+    if (!access(path,FEXISTS) && fflag) {
+        fprintf(stderr,"overwrite existing file: ");
+        if(!pick(path))
+            return(0);
+    }
+
+    if(dirflag) {   /* must be a directory */
+        if (dodmv(filesrc,path)) {
+            errout("%s: can't rename %s",progname,path,"");
+            return(2*fflag);
+        }
+    } else {        /* must be a file */
+        if (dofmv(filesrc,path)) {
+            errout("%s: can't rename %s",progname,path,"");
+            return(2*fflag);
+        }
+    }
+    return(0);
+}
+@EOF
+if test "`wc -lwc <restore.c`" != '     65    245   1983'
+then
+	echo ERROR: wc results of restore.c are `wc -lwc <restore.c` should be      65    245   1983
+fi
+
+chmod 644 restore.c
+
+echo x - updatetime.c
+cat >updatetime.c <<'@EOF'
+#include "nrm.h"
+#include <sys/types.h>  /* required for utime */
+#include <unistd.h>     /* required for utime */
+#include <sys/stat.h>   /* required for stat  */
+#include <fcntl.h>      /* required for open */
+
+long time();
+
+updatetime(path,offset)
+char *path;
+int offset; /* offset (in days) */
+{
+    int fd;
+    char junk[2];   /* used by read call */
+    struct stat buf;
+    struct utimbuf times;
+    if (stat(path,&buf) == -1) {
+        errout("%s: can't stat %s",progname,path,"");
+        return(1);
+    }
+    times.actime =  time(0) + ((time_t) (offset * SECS_PER_DAY));
+    times.modtime = buf.st_mtime;
+    if ((utime(path,&times)) == -1) {
+        if ((offset == 0) && ((errno == EPERM) || (errno == EACCES)))
+            if ((fd = open(path,O_RDONLY)) != -1) { /* last try */
+                if (read(fd,junk,1) != ERR) { /* read will modify atime */
+                    close(fd);  /* don't want to run out of fd's!!! */
+                    return(0);
+                }
+            }
+        errout("warning: %s: can't set time on file %s",progname,path,"");
+        return(0); /* warning */
+    }
+    return(0);
+}
+@EOF
+if test "`wc -lwc <updatetime.c`" != '     35    148   1130'
+then
+	echo ERROR: wc results of updatetime.c are `wc -lwc <updatetime.c` should be      35    148   1130
+fi
+
+chmod 644 updatetime.c
+
+echo x - gtime.c
+cat >gtime.c <<'@EOF'
+#include "nrm.h"
+
+char    *progname;  /* program name for error message */
+int aflag = 0;
+int cflag = 0;
+int fflag = 1;
+int mflag = 0;
+int iflag = 0;  /* not used but needed to link with errout */
+
+
+main(argc, argv)    /* print file modification times */
+int argc;
+char *argv[];
+{
+    extern int optind;  /* argv index of next option */
+    extern int opterr;
+    int c;
+    int errflag = 0;
+    int temp, returncode;
+    opterr = 0;     /* disables getopt's error msg's */
+
+    progname = argv[0];
+    if (argc == 1)
+        errflag++;  /* print usage if no com args   */
+    while ((c = getopt(argc, argv, "acm")) != EOF)
+        switch (c) {
+        case 'a':
+            aflag++;
+            break;
+        case 'c':
+            cflag++;
+            break;
+        case 'f':
+            fflag = 0;
+            break;
+        case 'm':
+            mflag++;
+            break;
+        case '?':
+            errflag++;
+            break;
+        }
+    if (errflag) {
+        fprintf(stderr,"usage: %s [-acm] file ...\n",progname);
+        exit(2);
+    }
+
+    if(!aflag && !cflag && !mflag) { /* proper defaults for flags */
+        aflag++;
+        cflag++;
+        mflag++;
+    }
+
+    returncode = 0;
+    for(; optind < argc; optind++) {
+        temp = printtimes(argv[optind]);
+        if (temp > returncode)
+            returncode = temp;
+    }
+    return(returncode);
+}
+@EOF
+if test "`wc -lwc <gtime.c`" != '     61    183   1375'
+then
+	echo ERROR: wc results of gtime.c are `wc -lwc <gtime.c` should be      61    183   1375
+fi
+
+chmod 644 gtime.c
+
+echo x - printtimes.c
+cat >printtimes.c <<'@EOF'
+#include "nrm.h"
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>   /* required for stat  */
+
+printtimes(path)
+char *path;
+{
+    extern int aflag,cflag,mflag;
+    struct stat buf;
+    if(stat(path,&buf) == -1) {
+        errout("%s: stat error in printtime()",progname,"","");
+        return(1);
+    }
+    printf("%s :\n",path);
+    if (aflag)
+        printf("\t    (read) access = %s",ctime(&buf.st_atime));
+    if (cflag)
+        printf("\t   (inode) change = %s",ctime(&buf.st_ctime));
+    if (mflag)
+        printf("\t(contents) modify = %s",ctime(&buf.st_mtime));
+    return (0);
+}
+@EOF
+if test "`wc -lwc <printtimes.c`" != '     23     59    600'
+then
+	echo ERROR: wc results of printtimes.c are `wc -lwc <printtimes.c` should be      23     59    600
+fi
+
+chmod 644 printtimes.c
+
+echo x - efopen.c
+cat >efopen.c <<'@EOF'
+#include <stdio.h>
+void exit();
+void errout();
+
+FILE *efopen(file, mode)    /* fopen file, die if can't */
+char *file, *mode;
+{
+    FILE *fp, *fopen();
+    extern char *progname;
+
+    if ((fp = fopen(file, mode)) != NULL)
+        return(fp);
+    errout("%s: can't open file %s mode %s",
+        progname, file, mode);
+    exit(1);
+    return(0);    /* unreachable statement to pacify lint */
+}
+@EOF
+if test "`wc -lwc <efopen.c`" != '     17     54    394'
+then
+	echo ERROR: wc results of efopen.c are `wc -lwc <efopen.c` should be      17     54    394
+fi
+
+chmod 644 efopen.c
+
+echo x - strindex.c
+cat >strindex.c <<'@EOF'
+strindex(s, t)  /* return index of t in s, -1 if none */
+char *s, *t;
+{
+    int i, n;
+
+    n = strlen(t);
+    for (i = 0; s[i] != '\0'; i++)
+        if (strncmp(s+i, t, n) == 0)
+            return i;
+    return -1;
+}
+@EOF
+if test "`wc -lwc <strindex.c`" != '     11     42    217'
+then
+	echo ERROR: wc results of strindex.c are `wc -lwc <strindex.c` should be      11     42    217
+fi
+
+chmod 644 strindex.c
+
+echo x - ttyin.c
+cat >ttyin.c <<'@EOF'
+#include <stdio.h>
+void exit();
+extern int fflag;
+
+ttyin() /* process response from /dev/tty (version 1) */
+{
+    char buf[BUFSIZ];
+    FILE *efopen();
+    static FILE *tty = NULL;
+
+    if (tty == NULL)
+        tty = efopen("/dev/tty","r");
+    if (fgets(buf,BUFSIZ,tty) == NULL || buf[0] == 'q')
+        exit(0);
+    return(buf[0]); /* else ordinary line */
+}
+@EOF
+if test "`wc -lwc <ttyin.c`" != '     16     49    361'
+then
+	echo ERROR: wc results of ttyin.c are `wc -lwc <ttyin.c` should be      16     49    361
+fi
+
+chmod 644 ttyin.c
+
+echo x - isdir.c
+cat >isdir.c <<'@EOF'
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+isdir(fname) /* file a directory? 1 if true, -1 if error, 0 otherwise */
+char *fname;
+{
+    struct stat stbuf;
+
+    if(stat(fname, &stbuf) == -1) {
+        return(-1);
+    }
+    if((stbuf.st_mode & S_IFMT) == S_IFDIR) {
+        return(1);
+    } else 
+        return(0);
+}
+@EOF
+if test "`wc -lwc <isdir.c`" != '     17     44    337'
+then
+	echo ERROR: wc results of isdir.c are `wc -lwc <isdir.c` should be      17     44    337
+fi
+
+chmod 644 isdir.c
+
+echo x - pick.c
+cat >pick.c <<'@EOF'
+#include <stdio.h>
+
+extern int bflag;   /* => 1, if we are in the background, 0 otherwise */
+
+pick(s) /* offer choice of s */
+char *s;
+{
+    if (s[0])           /* format tweaking! (just like /bin/rm) */
+        fprintf(stderr, "%s: ? ",s);
+    else 
+        fprintf(stderr, " ? ");
+
+    if (bflag) {        /* if in the background, return 0 */
+        fprintf(stderr, "n\n");
+        return(0);      /* don't call ttyin if in background!! */
+    } else 
+        return (ttyin() == 'y');
+}
+@EOF
+if test "`wc -lwc <pick.c`" != '     18     74    490'
+then
+	echo ERROR: wc results of pick.c are `wc -lwc <pick.c` should be      18     74    490
+fi
+
+chmod 644 pick.c
+
+echo x - nrm.h
+cat >nrm.h <<'@EOF'
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
+#define ERR -1
+#define BUFLEN 	512
+#define GRACETIME	3	/* default gracetime for deleted files */
+						/* if you change this, then also change */
+						/* nrm.1  &  nrm.cleanup*/
+#define SECS_PER_DAY 86400
+extern int gtime;
+extern char *progname;
+
+void exit();
+void errout();
+void basename();
+@EOF
+if test "`wc -lwc <nrm.h`" != '     16     50    352'
+then
+	echo ERROR: wc results of nrm.h are `wc -lwc <nrm.h` should be      16     50    352
+fi
+
+chmod 644 nrm.h
+
+echo x - dofmv.c
+cat >dofmv.c <<'@EOF'
+
+#include "nrm.h"
+
+dofmv(src,dst)      /* rename file from src to dst name */
+char *src, *dst;    /* tries real hard to unlink pre-existing dst file */
+{
+    if ((link(src,dst)) != 0) {
+        if (errno != EEXIST) {
+            errout("%s can't link %s and %s",progname,src,dst);
+            return(ERR);
+        }
+
+        if(expunge(dst)) {  /* make sure dest is gone */
+            errout("%s: can't delete old %s",progname,dst,"");
+            return(ERR);
+        }
+
+        if ((link(src,dst)) != 0) { /* and try again ...    */
+            errout("%s can't link %s and %s",progname,src,dst);
+            return(ERR);
+        }
+
+    }
+
+    if (updatetime(dst,gtime)) {
+        errout("%s can't set time on file %s",progname,dst,"");
+        return(ERR);
+    }
+
+    return(unlink(src));
+}
+@EOF
+if test "`wc -lwc <dofmv.c`" != '     31     94    795'
+then
+	echo ERROR: wc results of dofmv.c are `wc -lwc <dofmv.c` should be      31     94    795
+fi
+
+chmod 644 dofmv.c
+
+echo x - dodmv.c
+cat >dodmv.c <<'@EOF'
+#include "nrm.h"
+
+dodmv(src,dst)      /* rename directory from src to dst name */
+char *src, *dst;    /* deletes dst first !!! */
+{
+    if (expunge(dst)) { /* make sure dest is gone */
+        errout("%s: can't delete old %s",progname,dst,"");
+    }
+
+    if (!(linkdir(src,dst))) {
+        if(!expunge(src))   /* only kill src if linkdir ok! */
+            return(0);
+    } else {                /* linkdir failed so don't leave any */
+        expunge(dst);       /* junk hanging around */
+        return(1);
+    }
+    return(1);              /* unreachable but keeps lint happy */
+}
+@EOF
+if test "`wc -lwc <dodmv.c`" != '     18     79    584'
+then
+	echo ERROR: wc results of dodmv.c are `wc -lwc <dodmv.c` should be      18     79    584
+fi
+
+chmod 644 dodmv.c
+
+echo x - savedir.c
+cat >savedir.c <<'@EOF'
+#include "nrm.h"
+
+savedir(path)       /* save directory in ./.gone/dir */
+char *path;         /* deletes dst first !!! */
+{
+    char dstfile[BUFLEN];
+    char dir[BUFLEN];
+    char file[BUFLEN];
+    char sdir[BUFLEN]; /* dir to save */
+
+    strcpy(dir, path);
+    basename(dir, file); /* puts dir in dir and file in file */
+    /* called with full path in first arg */
+    sprintf(dstfile,"%s%s/%s",dir,".gone",file);
+
+    if (expunge(dstfile)) { /* make sure dest is gone */
+        return(ERR);
+    }
+
+    sprintf(sdir,"%s%s",dir,".gone");
+    if((mkdir(sdir,'\777') == -1) && errno != EEXIST) {
+        errout("%s: %s not removed: can't create %s",progname,path,sdir);
+        return(1);
+    }   /* make sure .gone exists before calling linkdir */
+
+    if (!(linkdir(path,dstfile))) {
+        if(!expunge(path)) {    /* only kill path if linkdir ok! */
+            if (updatetime(dstfile,gtime)) {
+                return(ERR);
+            }
+            return(0);
+        }
+    } else {                /* linkdir failed so don't leave any */
+        expunge(dstfile);       /* junk hanging around */
+        return(1);
+    }
+    return(ERR);
+}
+@EOF
+if test "`wc -lwc <savedir.c`" != '     38    135   1147'
+then
+	echo ERROR: wc results of savedir.c are `wc -lwc <savedir.c` should be      38    135   1147
+fi
+
+chmod 644 savedir.c
+
+echo x - savefile.c
+cat >savefile.c <<'@EOF'
+#include "nrm.h"
+
+savefile(path)      /* mv file from path to .gone dir */
+char *path;         /* tries real hard to unlink pre-existing dst file */
+{
+    char dstfile[BUFLEN];
+    char dstdir[BUFLEN];
+    char dir[BUFLEN];
+    char file[BUFLEN];
+
+    strcpy(dir, path);
+    basename(dir, file); /* puts dir in dir and file in file */
+    /* called with full path in first arg */
+
+    sprintf(dstdir,"%s%s",dir,".gone");
+    sprintf(dstfile,"%s/%s",dstdir,file);
+
+    if (link(path,dstfile)) { /* problems... */
+        if (errno == EEXIST) {  /* file already exists */
+            if(expunge(dstfile)) {  /* make sure dest is gone */
+                return(ERR);
+            }
+        } else if (errno == ENOENT) { /* directory doesn't exist */
+            if((mkdir(dstdir,'\777') == -1) && errno != EEXIST) {
+                errout("%s: %s not removed: can't create %s",
+                    progname,path,dstdir);
+                return(ERR);
+            }
+        } else {
+            errout("%s: %s not removed: can't link with %s",
+                progname,path,dstfile);
+            return(ERR);
+        }
+
+        if (link(path,dstfile)) {   /* so try again ...    */
+            errout("%s: %s not removed: can't link with %s",
+                progname,path,dstfile);
+            return(ERR);
+        }
+    }
+
+    if (updatetime(dstfile,gtime)) {
+        expunge(dstfile); /* don't leave sitting around */
+        return(ERR);
+    }
+
+    if (unlink(path)) {
+        errout("%s: %s not removed: can't unlink",progname,path,"");
+        expunge(dstfile); /* don't leave sitting around */
+        return(ERR);
+    }
+
+    return(0);
+}
+@EOF
+if test "`wc -lwc <savefile.c`" != '     54    182   1640'
+then
+	echo ERROR: wc results of savefile.c are `wc -lwc <savefile.c` should be      54    182   1640
+fi
+
+chmod 644 savefile.c
+
+echo x - nrm.1
+cat >nrm.1 <<'@EOF'
+.TH NRM 1:LOCAL 
+.ad b
+.SH NAME
+nrm, urm  \- recoverably remove and restore files 
+.SH SYNOPSIS
+.B nrm
+[
+.B \-fir
+] [
+.B \-t gracetime
+] file ...
+.br
+.B urm
+[
+.B \-f
+] file ...
+.PP
+.SH DESCRIPTION
+.I Nrm\^
+is a local replacement for \f3rm\fP(1).
+Files of name "\f3dirname/basename\fP" are 
+recursively moved
+to "\f3dirname/.gone/basename\fP"
+rendering them normally invisible except by \f3ls -a\fP.
+Such files are also implicitly marked for future deletion by
+updating their access time.
+.PP
+No error messages are printed when the
+.B \-f
+option is given
+or if the standard input is not a terminal.
+.PP
+If a designated file is a directory,
+an error comment is printed unless the optional
+argument
+.B \-r
+has been used.
+In that case,
+.I nrm\^
+renames the directory, making it invisible and subject to
+future deletion. 
+.PP
+If the
+.B \-i
+(interactive) option is in effect,
+.I nrm\^
+asks whether to move each file
+and, under
+.BR \-r ,
+whether to rename each directory.
+.PP
+Files are kept a default of
+3 
+days before permanent
+deletion.  
+If the 
+.B [\-t gracetime] 
+option is given then the file will not be permanently deleted for
+at least 
+.B gracetime
+days, unless the file is accessed during that time.
+Reading an nrm'd file will update it's access time,
+thereby resetting it's scheduled deletion date
+to be the default number of days
+(3)
+in the future.
+.PP
+.I Urm\^
+is used to restore deleted files or directories.
+Given "\f3dirname/basename\fP" or 
+"\f3dirname/.gone/basename\fP" as an argument
+.I urm\^
+will search for "\f3dirname/.gone/basename\fP"
+and restore the file or directory if found.
+The second form allows the user to give a command of the form
+"\f3urm foo/bar/.gone/*\fP" and have the shell
+do wild-card expansion.
+The modification time 
+of restored files is preserved.
+.PP
+.I Urm\^
+will ask before overwriting an existing file unless the 
+.B \-f 
+option is in effect.
+.SH FEATURES
+.I Nrm\^ 
+does not use \f3system\fP(2) or \f3exec\fP(2) so is significantly
+faster than similiar script-based implementations. 
+.PP
+.I Nrm\^
+will work over RFA.
+.PP
+This renaming strategy was used to  give a good summary 
+when using \f3du\fP(1) to evaluate freed-up disk space. 
+.SH ADMINISTRATION
+A line like the following should be added 
+to root's crontab:
+.br
+.nf
+
+	30 1 * * *		/etc/nrm.cleanup
+
+.fi
+.br
+The nrm.cleanup script permanently removes all 
+empty directories and expired files. 
+.SH SEE ALSO
+rm(1) unlink(2).
+.SH DIAGNOSTICS
+Generally self-explanatory.
+An attempt was made to provide the same exit codes 
+and user interface as \f3rm\fP.
+Returns 0 if successful, 2 on
+errors.
+It is forbidden to remove the file "\f3..\fP",
+the file "\f3.\fP" and the
+files "\f3.gone*\fP".  
+.PP
+.SH AUTHOR
+Rick Walker ...hplabs!hpl-opus!walker 
+@EOF
+if test "`wc -lwc <nrm.1`" != '    120    447   2739'
+then
+	echo ERROR: wc results of nrm.1 are `wc -lwc <nrm.1` should be     120    447   2739
+fi
+
+chmod 666 nrm.1
+
+echo x - nrm.cleanup
+cat >nrm.cleanup <<'@EOF'
+#!/bin/sh
+#nrm.cleanup
+#script used by nrm to cleanup erased files
+
+#keeps log file: LOGFILE and removes all components of
+#deleted directories that have not been changed for GRACETIME
+#will also delete directories as they become empty.
+#Rick Walker 10/10/86
+
+NUMLINES=200			#number of lines to save in logfile
+LOGFILE=/etc/nrm.log	#logfile for deleted filenames
+TEMPFILE=/tmp/nrm.$$	#tmp file used each day to list all deleted files
+GRACETIME="+3"			#gracetime to let files hang around	
+						#if you modify this line then update the man page.
+
+	echo '****' 'Files Deleted' `date` '****' > $TEMPFILE 
+
+find / -name '.gone' -print 2>/dev/null |
+while read file
+do
+	#kill all old files	
+  	find $file -type f -atime +$GRACETIME\
+	-exec /bin/rm -f {} \; \
+	-print \
+	>> $TEMPFILE 2>/dev/null
+
+	#kill all empty directories
+	find $file -type d \
+	-exec /bin/rmdir {} \; \
+	-print \
+	>> $TEMPFILE 2>/dev/null
+done
+
+	touch $LOGFILE
+	cat $LOGFILE >> $TEMPFILE
+	head -$NUMLINES $TEMPFILE > $LOGFILE 
+	/bin/rm $TEMPFILE
+
+exit 0
+@EOF
+if test "`wc -lwc <nrm.cleanup`" != '     39    155   1019'
+then
+	echo ERROR: wc results of nrm.cleanup are `wc -lwc <nrm.cleanup` should be      39    155   1019
+fi
+
+chmod 755 nrm.cleanup
+
+echo x - make_nrm.h
+cat >make_nrm.h <<'@EOF'
+#!/bin/sh
+
+#this script resolves the fact that nrm, and urm are dependant on
+#the default GRACETIME value set in nrm.cleanup.
+#The nrm.h header is edited by this script to match the nrm.cleanup
+#definition.
+
+newtime=`grep "^GRACETIME=" nrm.cleanup | tr -cd "[0-9]" ""`
+
+	echo "\tsetting GRACETIME = $newtime in nrm.h (as defined in nrm.cleanup)"
+
+	sed "/GRACETIME.*/s//GRACETIME $newtime/" nrm.h >nrm.h.tmp
+	/bin/mv nrm.h.tmp nrm.h
+@EOF
+if test "`wc -lwc <make_nrm.h`" != '     13     60    432'
+then
+	echo ERROR: wc results of make_nrm.h are `wc -lwc <make_nrm.h` should be      13     60    432
+fi
+
+chmod 755 make_nrm.h
+
+echo x - makefile
+cat >makefile <<'@EOF'
+HSOURCES=basename.c linkdir.c expunge.c  errout.c\
+	do_nrm.c nrmmain.c urmmain.c \
+	restore.c updatetime.c gtime.c printtimes.c
+NSOURCES=efopen.c strindex.c ttyin.c  isdir.c pick.c 
+OBJECTS=efopen.o ttyin.o errout.o pick.o strindex.o\
+	basename.o expunge.o linkdir.o updatetime.o 
+ALL=$(HSOURCES) $(NSOURCES) nrm.h\
+	dofmv.c dodmv.c  savedir.c savefile.c\
+	nrm.1 nrm.cleanup make_nrm.h makefile
+NLINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
+	basename.c expunge.c linkdir.c updatetime.c\
+	do_nrm.c nrmmain.c savedir.c savefile.c
+ULINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
+	basename.c expunge.c linkdir.c updatetime.c\
+	urmmain.c isdir.c dodmv.c dofmv.c restore.c
+CCFLAGS=-O
+SYSBIN=/usr/local/bin/
+MANDIR=/usr/local/man/man1/
+CATDIR=/usr/local/man/cat1/
+CLEANUP=/etc
+SRC=/usr/local/src/cmd/nrm/nrm/
+
+all: nrm urm gtime
+
+nrm: $(OBJECTS) do_nrm.o nrmmain.o savedir.o savefile.o
+	cc $(OBJECTS) do_nrm.o nrmmain.o savedir.o savefile.o -o nrm $(CCFLAGS) 
+	strip nrm			
+
+urm: $(OBJECTS) urmmain.o isdir.o dodmv.o dofmv.o restore.o
+	cc $(OBJECTS) urmmain.o isdir.o dodmv.o dofmv.o restore.o -o urm $(CCFLAGS)
+	strip urm
+
+gtime: gtime.o printtimes.o errout.o
+	cc gtime.o printtimes.o errout.o $(CCFLAGS) -o gtime
+
+install: nrm urm nrm.1 nrm.cleanup sharfile
+	-cp * $(SRC)
+	-cp nrm $(SYSBIN)
+	-cp urm $(SYSBIN)
+	-cp gtime $(SYSBIN)
+	-cp nrm.1 $(MANDIR)
+	/bin/rm -f $(CATDIR)nrm.1
+	-cp nrm.cleanup $(CLEANUP)
+
+shar: $(ALL) 
+	shar -bcv $(ALL) > sharfile 
+
+lint: $(NLINTSRC) $(ULINTSRC)
+	echo "******** lint output for nrm files *********" > fluff
+	lint $(NLINTSRC) >> fluff
+	echo "******** lint output for urm files *********" >> fluff
+	lint $(ULINTSRC) >> fluff
+
+$(HSOURCES):nrm.h
+
+##### other stuff not included in shar:   
+calls: 
+	cat $(NLINTSRC) | calls -
+rmdir: killdir.o killdirmain.o isdir.o errout.o
+	cc killdir.o killdirmain.o isdir.o errout.o $(CCFLAGS) -o rmdir
+rlist: rlist.o rmain.o isdir.o
+	cc rlist.o rmain.o isdir.o $(CCFLAGS) -o rlist
+mvdir: mvdir.o mvdirmain.o isdir.o errout.o
+	cc mvdir.o mvdirmain.o isdir.o errout.o $(CCFLAGS) -o mvdir
+@EOF
+if test "`wc -lwc <makefile`" != '     64    239   2066'
+then
+	echo ERROR: wc results of makefile are `wc -lwc <makefile` should be      64    239   2066
+fi
+
+chmod 666 makefile
+
+exit 0

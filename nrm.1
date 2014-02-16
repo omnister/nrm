@@ -1,0 +1,120 @@
+.TH NRM 1:LOCAL 
+.ad b
+.SH NAME
+nrm, urm  \- recoverably remove and restore files 
+.SH SYNOPSIS
+.B nrm
+[
+.B \-fir
+] [
+.B \-t gracetime
+] file ...
+.br
+.B urm
+[
+.B \-f
+] file ...
+.PP
+.SH DESCRIPTION
+.I Nrm\^
+is a local replacement for \f3rm\fP(1).
+Files of name "\f3dirname/basename\fP" are 
+recursively moved
+to "\f3dirname/.gone/basename\fP"
+rendering them normally invisible except by \f3ls -a\fP.
+Such files are also implicitly marked for future deletion by
+updating their access time.
+.PP
+No error messages are printed when the
+.B \-f
+option is given
+or if the standard input is not a terminal.
+.PP
+If a designated file is a directory,
+an error comment is printed unless the optional
+argument
+.B \-r
+has been used.
+In that case,
+.I nrm\^
+renames the directory, making it invisible and subject to
+future deletion. 
+.PP
+If the
+.B \-i
+(interactive) option is in effect,
+.I nrm\^
+asks whether to move each file
+and, under
+.BR \-r ,
+whether to rename each directory.
+.PP
+Files are kept a default of
+3 
+days before permanent
+deletion.  
+If the 
+.B [\-t gracetime] 
+option is given then the file will not be permanently deleted for
+at least 
+.B gracetime
+days, unless the file is accessed during that time.
+Reading an nrm'd file will update it's access time,
+thereby resetting it's scheduled deletion date
+to be the default number of days
+(3)
+in the future.
+.PP
+.I Urm\^
+is used to restore deleted files or directories.
+Given "\f3dirname/basename\fP" or 
+"\f3dirname/.gone/basename\fP" as an argument
+.I urm\^
+will search for "\f3dirname/.gone/basename\fP"
+and restore the file or directory if found.
+The second form allows the user to give a command of the form
+"\f3urm foo/bar/.gone/*\fP" and have the shell
+do wild-card expansion.
+The modification time 
+of restored files is preserved.
+.PP
+.I Urm\^
+will ask before overwriting an existing file unless the 
+.B \-f 
+option is in effect.
+.SH FEATURES
+.I Nrm\^ 
+does not use \f3system\fP(2) or \f3exec\fP(2) so is significantly
+faster than similiar script-based implementations. 
+.PP
+.I Nrm\^
+will work over RFA.
+.PP
+This renaming strategy was used to  give a good summary 
+when using \f3du\fP(1) to evaluate freed-up disk space. 
+.SH ADMINISTRATION
+A line like the following should be added 
+to root's crontab:
+.br
+.nf
+
+	30 1 * * *		/etc/nrm.cleanup
+
+.fi
+.br
+The nrm.cleanup script permanently removes all 
+empty directories and expired files. 
+.SH SEE ALSO
+rm(1) unlink(2).
+.SH DIAGNOSTICS
+Generally self-explanatory.
+An attempt was made to provide the same exit codes 
+and user interface as \f3rm\fP.
+Returns 0 if successful, 2 on
+errors.
+It is forbidden to remove the file "\f3..\fP",
+the file "\f3.\fP" and the
+files "\f3.gone*\fP".  
+.PP
+.SH AUTHOR
+Rick Walker ...hplabs!hpl-opus!walker 
