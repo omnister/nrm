@@ -1,86 +1,90 @@
-.TH NRM 1:LOCAL 
+.TH NRM 1:LOCAL "(version 0.1)" 
 .ad b
 .SH NAME
 nrm, urm  \- recoverably remove and restore files 
 .SH SYNOPSIS
 .B nrm
-[
-.B \-f
-] [
-.B \-i
-] [
-.B \-r
-] [
-.B \-s
-] [
-.B \-t gracetime
-] file ...
-.br
+[\-dfhirRsv] [-t <days>] [\-\-gracetime <days>] [\-\-directory]
+[\-\-force] [\-\-interactive] [\-\-recursive] [\-\-sequenced] [\-\-help]
+[\-\-version] [\-\-verbose] name...  
+.br 
 .B urm
-[
-.B \-f
-] file ...
+[ \-f ] name ... 
 .PP
 .SH DESCRIPTION
-.I Nrm\^
-is a local replacement for \f3rm\fP(1).
-Files of name "\f3dirpath/basename\fP" are 
+.BR Nrm\^
+is a local replacement for 
+.BR rm(1).
+.BR Nrm\^
+removes each specified file.  By default, it does not remove directories.
+.PP
+Files of name 
+.I "dirpath/basename" 
+are 
 recursively moved
-to "\f3dirpath/.gone/basename\fP"
-rendering them normally invisible except by \f3ls -a\fP.
+to 
+.I "dirpath/.gone/basename"
+rendering them normally invisible except by 
+.I ls -a.
 Such files are also implicitly marked for future deletion by
 updating their access time.
 .PP
-No error messages are printed when the
-.B \-f
-option is given
-or if the standard input is not a terminal.
-.PP
+.BR Nrm
+lets you use the
+.I \-\-
+option to indicate that all following arguments are non-options.  To
+remove a file called `\-f' in the current directory, you could type
+either
+.RS
+nrm \-\- \-f
+.RE
+or
+.RS
+nrm ./\-f
+.RE
+.SS OPTIONS
+.TP
+.I "\-d, \-\-directory" "\-r, \-R, \-\-recursive"
+Remove the contents of directories recursively.
 If a designated file is a directory,
 an error comment is printed unless the optional
 argument
-.B \-r
+.I \-r
 has been used.
 In that case,
 .I nrm\^
 renames the directory, making it invisible and subject to
-future deletion. 
-.PP
-If the
-.B \-i
-(interactive) option is in effect,
-.I nrm\^
-asks whether to move each file
+future deletion.  
+.TP
+.I "\-f, \-\-force"
+Ignore nonexistent files and never prompt the user.
+No error messages are printed when the
+.I \-f
+option is given
+or if the standard input is not a terminal.
+.TP
+.I "\-i, \-\-interactive"
+Prompt whether to rename each file 
 and, under
-.BR \-r ,
+.I \-r ,
 whether to rename each directory.
-.PP
-Files are kept a default of
-3 
-days before permanent
-deletion.  
-If the 
-.B [\-t gracetime] 
-option is given then the file will not be permanently deleted for
-at least 
-.B gracetime
-days, unless the file is accessed during that time.
-Reading an nrm'd file will update its access time,
-thereby resetting its scheduled deletion date
-to be the default number of days
-(3)
-in the future.
-.PP
+If the response does not begin
+with `y' or `Y', the file is skipped.  Answering 'q' or 'Q' 
+will abort the program.
+.TP
+.I "\-s, \-\-sequenced"
 If the
-.B \-s
+.I \-s
 (sequenced backup) option is given,
 .I nrm\^
-will not overwrite saved entries in the "\f3/.gone\fP" directory,
+will not overwrite saved entries in the 
+.I ".gone"
+directory,
 but instead will save each file with a unique suffix such that every
 deleted file is preserved for the full
-.B gracetime
+.I gracetime
 number of days.
-.PP
+.IP
 On long-filename systems, the suffix is of the form:
 "-YEAR-MONTH-DAY-HOUR:MIN:SEC", where each named field is 2 characters long:
 eg., "foo-93-05-09-21:32:17".  If two files of the same name are
@@ -88,50 +92,106 @@ deleted within the same second (thereby potentially mapping to the same
 name), the conflict is avoided by adding a random string to the conflicting
 name.  The disambiguating string is of the form: "%xx" where "x" is randomly
 chosen from the set "[0-9A-Za-z]". Eg., "foo-93-05-09-21:32:17%fQ".
-.PP
+.IP
 On short-filename systems (limited to filenames of 14 characters), the 
 name of the deleted file is constructed by truncating the original name
 to 11 characters, and appending a random suffix of the form "%xx", as described
 above.  Deleting the file "ThisIsALongFilename", with 
-.B \-s
+.I \-s
 sequencing, could create the deleted file "ThisIsALong%8c".
+.TP
+.I "\-t <days>, \-\-gracetime <days>"
+Files are kept a default of
+3 
+days before permanent
+deletion.  
+If the 
+.I [\-t <days>] 
+option is given then the file will not be permanently deleted for
+at least 
+.I gracetime
+days, unless the file is accessed during that time.
+Reading an nrm'd file will update its access time,
+thereby resetting its scheduled deletion date
+to be the default number of days
+(3)
+in the future.
+.TP
+.I "\-v, \-\-verbose"
+Print the name of each file before removing it.  Unlike GNU rm, the
+component files of a directory are not printed.
+.TP
+.I "\-\-help"
+Print a usage message on standard output and exit successfully.
+.TP
+.I "\-\-version"
+Print version information on standard output then exit successfully.
+
+.PP
 .PP
 .I Urm\^
 is used to restore deleted files or directories.
-Given "\f3dirpath/basename\fP" or 
-"\f3dirpath/.gone/basename\fP" as an argument
+Given 
+.I "dirpath/basename"
+or 
+.I "dirpath/.gone/basename"
+as an argument
 .I urm\^
-will search for "\f3dirpath/.gone/basename\fP"
+will search for 
+.I "dirpath/.gone/basename"
 and restore the file or directory if found.
 The second form allows the user to give a command of the form
-"\f3urm foo/bar/.gone/*\fP" and have the shell
+.BR "urm foo/bar/.gone/*"
+and have the shell
 do wild-card expansion.
 The modification time 
 of restored files is preserved.
 .PP
 .I Urm\^
 will ask before overwriting an existing file unless the 
-.B \-f 
+.I \-f 
 option is in effect.
-.SH FEATURES
-.I Nrm\^ 
-does not use \f3system\fP(2) or \f3exec\fP(2) so is significantly
-faster than similiar script-based implementations. 
 .PP
-.I Nrm\^
-works over RFA.
+Alternatively, the files in .gone may be viewed with 
+.I ls(1)
+and the desired file can be restored with 
+.I mv(1) 
+simply by moving it from the .gone directory to the desired location.  
+When using the (-s) option for sequenced backups, manually recovery
+is advisable so that the desired sequenced version can be chosen.
+.SH FEATURES
+.BR Nrm\^ 
+is a compiled program and 
+does not use 
+.I system(2)
+or 
+.I exec(2)
+so is significantly
+faster than similiar script-based implementations. 
 .PP
 When updating system executable files, using
 .I nrm\^ 
 to remove the old file will prevent causing a
 "killed on text modification" swap error.
 The removed version will be permanently deleted
-.B gracetime
+.I gracetime
 days after the last process has ceased to
 swap to the removed file.
 .PP
 This renaming strategy was used to  give a good summary 
-when using \f3du\fP(1) to evaluate freed-up disk space. 
+when using 
+.I du(1)
+to evaluate freed-up disk space. 
+.PP
+The 
+.I "\-d"
+and
+.I "\-\-directory" 
+options are implemented as synonyms for the 
+.I "\-r, \-R"
+and 
+.I "\-\-recursive"
+options to provide script-level compatibility with GNU rm(1).
 .SH ADMINISTRATION
 A line like the following should be added 
 to root's crontab:
@@ -149,14 +209,18 @@ rm(1) unlink(2).
 .SH DIAGNOSTICS
 Generally self-explanatory.
 An attempt was made to provide the same exit codes 
-and user interface as \f3rm\fP.
+and user interface as 
+.I rm.
 Returns 0 if successful, 2 on
-errors.
-It is forbidden to remove the file "\f3..\fP",
-the file "\f3.\fP" and the
-files "\f3.gone/*\fP".  The  
-.B \-t
+errors. Unlike gnu utils nrm -rv <dir> does not report every
+component of the
+dir (rename effect).
+.PP
+It is forbidden to remove the file \fI..\fR, the file \fI.\fR
+and the files \fI.gone/*\fR.
+The  
+.I \-t
 option does not work on symbolic links.
 .PP
 .SH AUTHOR
-Rick Walker (walker@hpl-opus.hpl.hp.com)
+Rick Walker (walker@omnisterra.com)

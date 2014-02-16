@@ -1,5 +1,6 @@
 #include "nrm.h"
 #include <sys/types.h>  /* required for utime */
+#include <utime.h>	/* required for utime (on LINUX) */
 #include <unistd.h>     /* required for utime */
 #include <sys/stat.h>   /* required for stat  */
 #include <fcntl.h>      /* required for open */

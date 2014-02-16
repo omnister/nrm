@@ -23,8 +23,8 @@
 char *ntostr();
 char *findhash();
 
-savefile(path)	    /* mv file from path to .gone dir */
-char	*path;	    /* tries real hard to unlink pre-existing dst file */
+savefile(path)      /* mv file from path to .gone dir */
+char    *path;      /* tries real hard to unlink pre-existing dst file */
 {
     char    dstfile[BUFLEN];
     char    dstdir[BUFLEN];
@@ -36,72 +36,76 @@ char	*path;	    /* tries real hard to unlink pre-existing dst file */
 
 
     strcpy(dir, path);
-    basename(dir, file); /* puts dir in dir and file in file */
+    basenm(dir, file); /* puts dir in dir and file in file */
     sprintf(dstdir, "%s%s", dir, ".gone");
 
     if (!sflag) {
-	sprintf(dstfile, "%s/%s", dstdir, file);
+        sprintf(dstfile, "%s/%s", dstdir, file);
     } else {
-	time(&now);
-	if (islong(dir)) {	    /* long filename system */
-	    strftime(timestring,BUFLEN,"-%y-%m-%d-%H:%M:%S",localtime(&now));
-	    sprintf(tmp,"%s/%s%s",dstdir,file,timestring);
+        time(&now);
+        if (islong(dir)) {          /* long filename system */
+            strftime(timestring,BUFLEN,"-%y-%m-%d-%H:%M:%S",localtime(&now));
+            sprintf(tmp,"%s/%s%s",dstdir,file,timestring);
 
-	    /* avoid using hash if possible */
-	    if (access(tmp, FEXISTS) == 0) {    /* collision */
-	    	strcpy(dstfile,findhash(tmp)); 
-	    } else {				/* no collision */
-	    	strcpy(dstfile,tmp);	
-	    }
+            /* avoid using hash if possible */
+            if (access(tmp, FEXISTS) == 0) {    /* collision */
+                strcpy(dstfile,findhash(tmp)); 
+            } else {                            /* no collision */
+                strcpy(dstfile,tmp);    
+            }
 
-	} else {	    	    /* short filename system */
-	    sprintf(tmp,"%s/%-.11s",dstdir,file);
-	    strcpy(dstfile,findhash(tmp));
-	}
+        } else {                    /* short filename system */
+            sprintf(tmp,"%s/%-.11s",dstdir,file);
+            strcpy(dstfile,findhash(tmp));
+        }
     } 
 
     /*
     ** the following 5 lines are needed only because rename(src,dst)
-    ** returns *no* error, and does not remove the src file when the src
-    ** and dst files happen to be linked.  Because of this, we have to
-    ** pre-remove the dst file.  If/when rename() is fixed, these lines
-    ** can be removed...  <RCW 7/20/94>
+    ** returns *no* error on HPUX, and does not remove the src file 
+    ** when the src and dst files happen to be linked.  Because of this,
+    ** we have to pre-remove the dst file.  If/when rename() is fixed, 
+    ** these lines can be removed...  <RCW 7/20/94>
     */
     if (expunge(dstfile)) { /* make sure dest is gone */
-	errout("%s: %s not removed: can't link with %s",
-	    progname, path, dstfile);
-	return(ERR);
+        errout("%s: %s not removed: can't link with %s",
+            progname, path, dstfile);
+        return(ERR);
     }
 
     if (rename(path, dstfile)) {    /* problems... */
-	if (errno == ENOENT)	 { /* directory doesn't exist */
-	    /* printf("errno = %d\n",errno); */
-	    if ((mkdir(dstdir, 0777) == -1) && errno != EEXIST) {
-		errout("%s: %s not removed: can't create %s",
-		    progname, path, dstdir);
-		return(ERR);
-	    }
-	    if (chmod(dstdir, 0777)) {
-		errout("%s: error in setting mode of .gone:",
-		    progname, "", "");
-		/* return(ERR); */ /* not fatal */
-	    }
-	} else if (expunge(dstfile)) { /* make sure dest is gone */
-	    errout("%s: %s not removed: can't link with %s",
-		progname, path, dstfile);
-	    return(ERR);
-	} 
+        if (errno == ENOENT)     { /* directory doesn't exist */
+            /* printf("errno = %d\n",errno); */
+            if ((mkdir(dstdir, 0777) == -1) && errno != EEXIST) {
+                errout("%s: %s not removed: can't create %s",
+                    progname, path, dstdir);
+                return(ERR);
+            }
+            if (chmod(dstdir, 0777)) {
+                errout("%s: error in setting mode of .gone:",
+                    progname, "", "");
+                /* return(ERR); */ /* not fatal */
+            }
+        } else if (expunge(dstfile)) { /* make sure dest is gone */
+            errout("%s: %s not removed: can't link with %s",
+                progname, path, dstfile);
+            return(ERR);
+        } 
 
-	if (rename(path, dstfile)) {    /* so try again ...	   */
-	    errout("%s: %s not removed: can't link with %s",
-		progname, path, dstfile);
-	    return(ERR);
-	}
-    }
+        if (rename(path, dstfile)) {    /* so try again ...        */
+            errout("%s: %s not removed: can't link with %s",
+                progname, path, dstfile);
+            return(ERR);
+        }
+    } 
+    
+    if (fflag && verbose) {     /* no problems, but verbose */
+         printf("%s\n",path);
+    }   
 
     if (updatetime(dstfile, gtime)) {
-	/* expunge(dstfile);  */
-	return(ERR);
+        /* expunge(dstfile);  */
+        return(ERR);
     }
 
     return(0);
@@ -121,23 +125,22 @@ char	*path;	    /* tries real hard to unlink pre-existing dst file */
 char *findhash(path)
 char *path;
 {
-    char dest[BUFLEN];
-    static int initialized = 0;
-    int i,n,pid;
+    static char dest[BUFLEN];
+    static int pid = 0;
+    int i,n;
 
-    if (!initialized) {
-	pid=getpid();
-    	srand((unsigned) time((char *) 0) + (unsigned) pid);
-	initialized++;
+    if (!pid) {
+        pid=getpid();
+        srand((unsigned) time((time_t *) 0) + (unsigned) pid);
     }
 
     for (i=0;i<15;i++) {    /* get 15 tries at hashing */
-	n = (rand()+pid)%3840;
-    	sprintf(dest, "%s%s", path,ntostr(n));
+        n = (rand()+pid)%3840;
+        sprintf(dest, "%s%s", path,ntostr(n));
 
-	if (access(dest, FEXISTS)) {     /* doesn't exist */
-	    return(dest);
-	} 
+        if (access(dest, FEXISTS)) {     /* doesn't exist */
+            return(dest);
+        } 
     }
     return(path);
 }
@@ -151,7 +154,7 @@ int n;
     static char str[BUFLEN];
 
     if (n < 0) {
-        printf("%s: ntostr() called with negative number!\n");
+        printf("%s: nrm bug: ntostr() called with negative number!\n");
         exit(1);
     } else if (n<62) {
         str[0] = SEPCHAR;
@@ -183,33 +186,32 @@ char *path;
     static char savedpath[BUFLEN] = "";
     char temppath[BUFLEN];
     static int  savedstatus = 0;
-    int i;
     int fd;
 
     if (strcmp(savedpath, path) != 0) {
-	strcpy(savedpath,path);
+        strcpy(savedpath,path);
 
-	sprintf(temppath,"%s/%s",savedpath,LONGNAME);
+        sprintf(temppath,"%s/%s",savedpath,LONGNAME);
 
-	if((fd = open (temppath, O_RDWR|O_CREAT,0777)) == -1) {
-	    savedstatus = 0;	    /* error -> SHORT */
-	} else {
+        if((fd = open (temppath, O_RDWR|O_CREAT,0777)) == -1) {
+            savedstatus = 0;        /* error -> SHORT */
+        } else {
 
-	    sprintf(temppath,"%s/%s",savedpath,LONGERNAME);
+            sprintf(temppath,"%s/%s",savedpath,LONGERNAME);
 
-	    if (access(temppath, FEXISTS) == 0) {
-		savedstatus = 0;    /* truncated so SHORT */
-	    } else {
-		savedstatus = 1;    /* not truncated so LONG */
-	    }
+            if (access(temppath, FEXISTS) == 0) {
+                savedstatus = 0;    /* truncated so SHORT */
+            } else {
+                savedstatus = 1;    /* not truncated so LONG */
+            }
 
-	    close(fd);		    /* cleanup */
+            close(fd);              /* cleanup */
 
-	    sprintf(temppath,"%s/%s",savedpath,LONGNAME);
-	    if (unlink(temppath)) {
-		errout("%s: unlink error in islong()\n",progname);
-	    }
-	}
+            sprintf(temppath,"%s/%s",savedpath,LONGNAME);
+            if (unlink(temppath)) {
+                errout("%s: unlink error in islong()\n",progname);
+            }
+        }
     }
     return(savedstatus);
 }

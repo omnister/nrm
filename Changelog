@@ -1,0 +1,160 @@
+
+
+June 6, 1999 Pommereau Franck <fp@lri.fr>
+
+    - I also noticed a minor difference of behavior with GNU's rm : if I ask
+    `nrm -r' it just returns happily, while if I ask `rm -r' it complains
+    for a lack of argument. This is really out of consequences, but since
+    you may want to mimic as far as possible rm's behavior, maybe you want
+    to be reported this kind of differences.
+
+    - fixed.
+
+May 5, 1999 Pommereau Franck <fp@lri.fr>
+
+    - found a bug:
+
+    ------------------- cut here -------------------
+    $ ls -a 	# starting from scratch
+    .   ..
+    $ mkdir foo
+    $ touch foo/bar
+    $ nrm -r foo
+    $ ls -a 	# all is ok
+    .      ..     .gone
+    $ mkdir foo
+    $ nrm -r foo
+    nrm: ./.gone/foo not removed: can't unlink : Is a directory
+    nrm: ./.gone/foo not removed: can't unlink : Is a directory
+    nrm: foo not removed: can't link with ./.gone/foo: Directory not empty
+		    # not really what I would expect but... why not.
+    $ nrm -rf foo
+    $ ls -a
+    .      ..     .gone  foo
+		    # the -f doesn't force but makes nrm be quiet.
+    $ rm .gone/foo/bar
+    $ nrm -r foo
+    nrm: ./.gone/foo not removed: can't unlink : Is a directory
+    $ nrm -rf foo
+    $ ls -a 	# works now w/-f.. not consistent w/previous behaviour
+    .      ..     .gone
+    ------------------- cut here -------------------
+
+    - traced problem to Linux kernel 2.2.x (bug didn't exist under 2.0.x or
+      under HPUX).  Something changed in the return code to ulink().
+      The fix was adding a check for EISDIR in expunge.c
+
+    - found another bug while testing:
+
+	$ mkdir testnrm
+	$ chdir testnrm
+	$ touch .gone
+	$ touch foo
+	$ nrm foo
+	nrm: ./.gone/foo not removed: can't unlink : Not a directory
+	nrm: ./.gone/foo not removed: can't unlink : Not a directory
+	nrm: foo not removed: can't link with ./.gone/foo: Not a directory
+
+      resolved the issue by checking for this case and printing an
+      informative error message telling the user that .gone is not
+      a directory.   I decided not to just delete the .gone file in
+      case someone has their PhD. thesis in ".gone" :-).
+
+May 15, 1998 Pommereau Franck <pommerea@donald.sp2mi.univ-poitiers.fr>
+
+    - suggested having a  $HOME/.nrmrc with regexp patterns for files
+      that can routinely be nuked rather than saved.  Also, should have
+      a confirmation message: "Files will be really deleted, continue ?"
+      After discussion, it was decided that this might be a trojan
+      horse problem for root users su'ed into a directory, and also 
+      an efficiency hit for nrm to parse each time (and run regexp
+      on every filename).  Perhaps it would be best to implement this
+      policy in nrm.cleanup so that junk files would be immediately
+      deleted each evening rather than hanging around for $GRACETIME days.
+
+
+May 1, 1998 Pommereau Franck <pommerea@donald.sp2mi.univ-poitiers.fr>
+
+    - didn't like the .gone directory created with umask value (see
+      comment 9/14/89).  Not implemented.  However, a counter proposal
+      was made of making the deletion directories equal to .gone.$USER so
+      that there would be no collisions, and that files would not be
+      "leaked out" into public directories by being nrm'ed.
+
+    - suggested an optimization in /etc/nrm.cleanup:
+
+	replacing 
+	    "find / -name '.gone' -print 2>/dev/null |" 
+	with 
+	    "find / -type d -name ...." 
+	speeds up the things in a significant way
+
+
+March 22, 1994  Ken Poulton <poulton@zonker.hpl.hp.com>
+
+    - found bug:
+
+	# date >foo
+	# nrm foo
+	# urm foo
+	# ln foo .gone/foo
+    to make a file that is already linked into .gone.  Now 
+	# nrm foo
+    silently fails to remove foo.
+
+    - traced to a bug in rename(3c), fell back to actually checking
+      the destination file with lstat() prior to doing the rename().  I
+      had optimized the code to only check the dest file if rename()
+      failed with an error.  This gave about a 1.7x speed up, but
+      doesn't work reliably with HP-UX.  Here's a test harness to
+      see the problem:
+
+      ----------------- cut here ----------------- 
+
+	/* test an nrm bug.  Do
+           date >foo; nrm foo; urm foo; ln foo .gone/foo
+           and run this executable.  ./foo should be gone, and .gone/foo should
+	   exist.
+	*/
+
+	#include <stdio.h>
+	main () {
+		printf("retval=%d\n", rename("./foo",".gone/foo"));
+	}
+
+      ----------------- cut here ----------------- 
+      
+      ( 9/22/99: same buggy behavior under Linux 2.2.5, and HPUX 10.2!)	    
+    
+
+June 16, 1993 Bob Jewett <jewett@timw.hpl.hp.com>
+    - removed HP-UX/HSED-centric use of find2() rather than find in the
+    cleanup script.
+
+May 17, 1993  RCW
+    - added sequenced deletion with human readable datestamps:
+
+    # 116) ls .gone
+    total 20                             2 junk1-93-05-19-12:37:36%B1
+       2 junk1-93-05-19-12:37:34         2 junk1-93-05-19-12:37:37
+       2 junk1-93-05-19-12:37:35         2 junk1-93-05-19-12:37:37%2J
+       2 junk1-93-05-19-12:37:35%c5      2 junk1-93-05-19-12:37:38
+       2 junk1-93-05-19-12:37:35%ha      2 junk1-93-05-19-12:37:38%MU
+       2 junk1-93-05-19-12:37:36
+	
+    - added detection of short filename systems and hashed workaround
+
+Sept 14, 1989 Ken Poulton <poulton@hpl-milo>
+    - suggested that nrm chmod 777 any new .gone directory, so that
+      it will not cause failure for other users.
+
+June 28, 1989 Ken Poulton <poulton@hpl-lola>
+    - suggested that nrm should simply move directories rather than do a
+    recursive copy.  (implemented with rename())
+    - suggested that nrm be modified to handle the removal of symlinks
+    - found bug:
+	if you make a symlink to a file that does not exist
+	     ln -s foo bar
+	and then "nrm bar", you get
+	     "remove bar, mode 755?"
+      fixed by special casing this with lstat()

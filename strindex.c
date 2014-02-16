@@ -1,3 +1,5 @@
+#include <string.h>
+
 strindex(s, t)  /* return index of t in s, -1 if none */
 char    *s, *t;
 {

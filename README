@@ -1,13 +1,56 @@
-to install:
+nrm: A New RM allowing file recovery and sequenced backup versions.
 
-'make install', or manually do the following:
+Released under GNU GPL V2 or later.  If you make changes, or find bugs,
+please let me know so I can fold them back into the main distribution. 
+
+Nrm has been written to as exact a replica of rm(1) as possible
+with regards to behavior and error codes.  
+
+Unlike gnu utils nrm -rv <dir> does not report every component of the
+dir (rename effect)
+
+Installation Hints:
+
+Do a 'make clean' followed by a 'make'.
+
+If everything proceeds without a problem, then 
+do a 'make install' which will do the following:
 
 	1) copy 'nrm' to /usr/local/bin/nrm
 	2) copy 'urm' to /usr/local/bin/urm
 	3) copy 'nrm.cleanup' to /etc/nrm.cleanup
 	4) copy 'nrm.1' to /usr/local/man/man1/nrm.1
-	5) add the following daily job to your crontab: 
-		find / -name '.gone' -print 2>/dev/null | /etc/nrm.cleanup
+
+Finally, you will need to manually add the following line to
+root's crontab:
+
+	30 1 * * *      /etc/nrm.cleanup      
+
+This example will run the cleanup script every night at 1:30 AM.  The
+cleanup script examines all ".gone" directories system wide and removes
+any files with access dates older than 3 days.  Any empty .gone directories
+are also deleted.
+
+You can play with nrm by explicitly typing "nrm", but for long term
+use I recommend creating a shell alias.  For example, in bash, I 
+have the following lines in my .kshrc:
+
+     if [ "`which nrm`" != "" ] ; then
+            alias rm=nrm
+            alias cp=ncp
+            alias mv=nmv
+	    alias RM='/bin/rm'
+	    alias CP='/bin/cp'
+	    alias MV='/bin/mv'
+    fi
+
+The file 'ncp' is a safe cp(1) that nrm's a file before copying
+onto it.  It can be symlinked as 'nmv' and will similiarly
+protect the target of a mv(1).
+
+When I want to *really* remove something I either use the "RM" alias
+or just type "\rm".  The backslash will prevent the alias from being
+used, and the shell will look for a real program named rm, usually /bin/rm.
 
 All the sources were edited using 4 character tabstops (in vi: set ts=4).
 For distribution, tabstops have been converted into spaces using the
@@ -16,3 +59,17 @@ utility "expand -4".
 The program 'gtime' is helpful if you want to look at filetimes.
 It is invoked 'gtime -acm' and prints access, change and modify times.
 If no flags specified, all times are printed.
+
+The program 'needsmade' facilitates simple make-like activities
+from the shell.  It returns 0,1 or 2 when called as 
+
+    needsmade <file1> <file2>
+
+depending on whether file1 is newer, older than file2, or doesn't
+exist.
+
+--
+Rick Walker
+walker@omnisterra.com
+
+

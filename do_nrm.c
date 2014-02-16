@@ -24,7 +24,7 @@ char    *fname;
     if ((strindex(fname, ".gone") != -1) || 
         !strcmp(fname, "..") || 
         !strcmp(fname, ".")) { /* prevents nasty recursion ! */
-        fprintf(stderr, "%s: cannot remove %s\n", progname, fname);
+        fprintf(stderr, "%s: cannot remove %s, try /bin/rm\n", progname, fname);
         /* return(0); */
         return(2);			/* treat as an error */
     }

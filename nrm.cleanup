@@ -1,6 +1,6 @@
 #!/bin/sh
 #nrm.cleanup
-#script used by nrm to cleanup erased files
+#script used by nrm(1) to cleanup erased files
 
 #keeps log file: LOGFILE and removes all components of
 #deleted directories that have not been changed for GRACETIME
@@ -10,25 +10,37 @@
 NUMLINES=200            #number of lines to save in logfile
 LOGFILE=/etc/nrm.log    #logfile for deleted filenames
 TEMPFILE=/tmp/nrm.$$    #tmp file used each day to list all deleted files
-GRACETIME="+3"          #gracetime to let files hang around 
+
+BUGFILE=/dev/null
+#BUGFILE=/tmp/nrmbugs.$$
+#touch $BUGFILE
+
+GRACETIME="+3"          #gracetime number of days to let files hang around 
                         #if you modify this line then update the man page.
+						#( needs a leading "+" sign )
 
     echo '****' 'Files Deleted' `date` '****' > $TEMPFILE 
 
-find / -fsonly hfs -name '.gone' -print 2>/dev/null |
+# HP-UX 9.0
+#find / -fsonly hfs -name '.gone' -print 2>/dev/null |
+
+# Linux 2.0.18
+nice find / -type d -name '.gone' -print 2>/dev/null |
+
+
 while read file
 do
     #kill all old files 
-    find $file ! -type d -atime +$GRACETIME\
+    nice find $file ! -type d -atime $GRACETIME\
     -exec /bin/rm -f {} \; \
     -print \
-    >> $TEMPFILE 2>/dev/null
+    >> $TEMPFILE 2>>$BUGFILE
 
     #kill all empty directories
     find $file -type d \
     -exec /bin/rmdir {} \; \
     -print \
-    >> $TEMPFILE 2>/dev/null
+    >> $TEMPFILE 2>>$BUGFILE
 done
 
     touch $LOGFILE

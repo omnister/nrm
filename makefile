@@ -1,5 +1,5 @@
 HSOURCES=basename.c expunge.c  errout.c\
-	do_nrm.c nrmmain.c urmmain.c \
+	do_nrm.c nrmmain.c urmmain.c needsmade.c \
 	restore.c updatetime.c gtime.c printtimes.c
 NSOURCES=efopen.c strindex.c ttyin.c  isdir.c pick.c 
 OBJECTS=efopen.o ttyin.o errout.o pick.o strindex.o\
@@ -23,7 +23,7 @@ CP=ncp
 
 CCFLAGS=-O
 
-all: nrm urm gtime
+all: nrm urm gtime needsmade
 
 nrm: $(OBJECTS) do_nrm.o nrmmain.o savefile.o
 	cc $(OBJECTS) do_nrm.o nrmmain.o savefile.o -o nrm $(CCFLAGS) 

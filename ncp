@@ -1,0 +1,100 @@
+#! /bin/ksh
+#
+# ncp --- safe cp/mv
+#
+case `basename $0` in
+    *cp* )
+	usage="Usage:  $0 [-f|-i] [-p] [-t time] f1 f2
+	$0 [-f|-i] [-p] [-s] [-t time] f1 ... fn d1
+	$0 [-f|-i] [-p] -R|-r [-s] [-t time] d1 ... dn"
+	prog=cp
+	;;
+    *mv* )
+	usage="Usage: $0 [-f] [-i] [-t time] f1 f2
+       $0 [-f] [-i] [-s] [-t time] f1 ... fn d1
+       $0 [-f] [-i] [-s] [-t time] d1 d2"
+       prog=mv
+       ;;
+esac
+
+gopts='rRpifst:'
+#
+#   -r	    Recursive (cp only)
+#   -f	    Force w/o prompt for permission (mv only)
+#   -i	    Interactive (mv only)
+#   -p	    preserve permissions and times
+#   -t time Nrm backup expiration (cleanup) time in days
+#   -s      Sequenced Nrm backups 
+#
+# Ken Poulton  HPL
+# $Header: ncp,v 1.9 96/12/30 14:48:29 poulton Exp $
+# From: Header: EXAMPLE,v 1.4 91/01/06 02:57:50 poulton Exp $
+# $Source: /mnt/jr.usr.local/bin/RCS/ncp,v $
+# From: Source: /nfs/yaz/usr/local/src/cmd/EXAMPLE,v $
+#
+# Recommended usage in .kshrc:
+#   if [ "`whence nrm`" != "" ] ; then
+#       alias rm=nrm
+#       alias cp=ncp
+#       alias mv=nmv
+#   fi
+#   alias rm_=/bin/rm
+#   alias cp_=/bin/cp
+#   alias mv_=/bin/mv
+
+
+flags=""
+files=""
+nrm_flags=""
+
+set -f
+set -- `getopt "$gopts" "$@"`; ret=$?
+set +f
+if [ $ret != 0 ] ; then
+    echo "$usage" 1>&2; exit 2
+fi
+while [ $# -gt 0 ] ; do
+    case $1 in
+	-[p] ) 	flags="$flags $1";  shift ;;
+	-[rRif] ) nrm_flags="$nrm_flags $1"; flags="$flags $1";  shift ;;
+	-s )	nrm_flags="$nrm_flags $1"; shift ;;
+	-t )	nrm_flags="$nrm_flags -t $2"; shift 2 ;;
+	#-p )	parallel=1; shift ;;	    # flag w/o argument
+	#-n )	name=$2; shift 2 ;; 	    # flag w/ argument
+	-- )	shift; break ;;
+	#### These cases should never be executed:
+	-* )	echo "$0: script error: option $1 is not handled" 1>&2; exit 2;;
+	* )	echo "$0: getopts error in option parsing" 1>&2; exit 2;;
+    esac
+done
+
+# Now only filenames are left:
+while [ $# -gt 1 ] ; do
+    files="$files $1"
+    shift
+done
+dest=$1
+if [ "$files" = ""  -o  "$dest" = "" ] ; then
+    echo "$usage" 1>&2; exit 2
+fi
+
+# Now nrm the target files
+if [ -d $dest ] ; then
+    for f in $files ; do
+	ff="$dest/`basename $f`"
+	if [ -f "$f"  -a  -f "$ff" ] ; then
+	    if [ "`ls -i $f | awk '{print $1}'`" != \
+			    "`ls -i $ff | awk '{print $1}'`" ] ; then
+		nrm $nrm_flags "$ff"
+	    fi
+	fi
+    done
+elif [ -f $dest ] ; then
+    if [ "`ls -i $files | awk '{print $1}'`" != \
+		    "`ls -i $dest | awk '{print $1}'`" ] ; then
+    	nrm $nrm_flags $dest 
+    fi
+fi
+
+# Now do the copy
+exec /bin/$prog $flags $files $dest

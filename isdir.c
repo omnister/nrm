@@ -12,8 +12,9 @@ char    *fname;
     }
     if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
         return(1);
-    } else
+    } else {
         return(0);
+    }
 }
 
 

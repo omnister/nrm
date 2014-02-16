@@ -6,17 +6,18 @@
 #define BUFLEN	512
 #define WARNSIZE    10000000	/* filesize that will trigger warning */
                                 /* about using nrm */
+
 #define GRACETIME   3	/* default gracetime for deleted files */
-			/* if you change this, then also change */
-			/* nrm.1  &  nrm.cleanup*/
+						/* if you change this, then also change */
+						/* nrm.1  &  nrm.cleanup */
 
 #define SEPCHAR '%'	/* separation character for sequenced backups */
 
 #define SECS_PER_DAY 86400
 extern int iflag, fflag, rflag, bflag, sflag;
-extern int gtime;
+extern int gtime, verbose;
 extern char *progname;
 
 void exit();
 void errout();
-void basename();
+void basenm();

@@ -10,7 +10,7 @@ ttyin() /* process response from /dev/tty (version 1) */
 
     if (tty == NULL)
         tty = efopen("/dev/tty", "r");
-    if (fgets(buf, BUFSIZ, tty) == NULL || buf[0] == 'q')
+    if (fgets(buf, BUFSIZ, tty) == NULL || buf[0] == 'q' || buf[0] == 'Q')
         exit(0);
     return(buf[0]); /* else ordinary line */
 }

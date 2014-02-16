@@ -33,14 +33,15 @@ char    *path;
     }
 
     strcpy(dir, path);
-    basename(dir, file);    /* puts dir in dir and file in file */
+    basenm(dir, file);    /* puts dir in dir and file in file */
     /* called with full path in first arg */
 
     sprintf(filesrc, "%s%s/%s", dir, ".gone", file);
     if ((dirflag = isdir(filesrc)) == -1) {
         errno = 0;  /* make sure errout doesn't print system err msg */
 
-        errout("deleted file: %s does not exist", path, "", "");
+        /* errout("deleted file: %s does not exist", path, "", ""); */
+        errout("deleted file: %s does not exist", filesrc , "", "");
         return(2 * fflag);
     }
 
