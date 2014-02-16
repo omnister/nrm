@@ -15,17 +15,7 @@ GRACETIME="+3"          #gracetime to let files hang around
 
     echo '****' 'Files Deleted' `date` '****' > $TEMPFILE 
 
-find2 ()
-{
-    if [ -x /usr/local/bin/find2 ] ; then
-    # find2 is a modified find that avoids searching nfs filesystems
-        /usr/local/bin/find2 "$@" -fsonly hfs
-    else
-        find "$@" -fstype hfs
-    fi
-}
-
-find2 / -name '.gone' -print 2>/dev/null |
+find / -fsonly hfs -name '.gone' -print 2>/dev/null |
 while read file
 do
     #kill all old files 

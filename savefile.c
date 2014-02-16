@@ -73,7 +73,7 @@ char	*path;	    /* tries real hard to unlink pre-existing dst file */
 		    progname, "", "");
 		/* return(ERR); */ /* not fatal */
 	    }
-	} else {
+	} else if (expunge(dstfile)) { /* make sure dest is gone */
 	    errout("%s: %s not removed: can't link with %s",
 		progname, path, dstfile);
 	    return(ERR);

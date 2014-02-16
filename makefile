@@ -18,6 +18,7 @@ MANDIR=/usr/local/man/man1/
 CATDIR=/usr/local/man/cat1/
 CLEANUP=/etc
 SRC=/usr/local/src/cmd/nrm/nrm/
+CP=ncp
 
 
 CCFLAGS=-O
@@ -36,13 +37,12 @@ gtime: gtime.o printtimes.o errout.o
 	cc gtime.o printtimes.o errout.o $(CCFLAGS) -o gtime
 
 install: nrm urm nrm.1 nrm.cleanup sharfile
-	-cp * $(SRC)
-	-cp nrm $(SYSBIN)
-	-cp urm $(SYSBIN)
-	-cp gtime $(SYSBIN)
-	-cp nrm.1 $(MANDIR)
+	-$(CP) nrm $(SYSBIN)
+	-$(CP) urm $(SYSBIN)
+	-$(CP) gtime $(SYSBIN)
+	-$(CP) nrm.1 $(MANDIR)
 	/bin/rm -f $(CATDIR)nrm.1
-	-cp nrm.cleanup $(CLEANUP)
+	-$(CP) nrm.cleanup $(CLEANUP)
 
 shar: $(ALL) 
 	shar -b -c -v $(ALL) > sharfile
