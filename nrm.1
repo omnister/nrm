@@ -24,9 +24,9 @@ nrm, urm  \- recoverably remove and restore files
 .SH DESCRIPTION
 .I Nrm\^
 is a local replacement for \f3rm\fP(1).
-Files of name "\f3dirname/basename\fP" are 
+Files of name "\f3dirpath/basename\fP" are 
 recursively moved
-to "\f3dirname/.gone/basename\fP"
+to "\f3dirpath/.gone/basename\fP"
 rendering them normally invisible except by \f3ls -a\fP.
 Such files are also implicitly marked for future deletion by
 updating their access time.
@@ -65,8 +65,8 @@ option is given then the file will not be permanently deleted for
 at least 
 .B gracetime
 days, unless the file is accessed during that time.
-Reading an nrm'd file will update it's access time,
-thereby resetting it's scheduled deletion date
+Reading an nrm'd file will update its access time,
+thereby resetting its scheduled deletion date
 to be the default number of days
 (3)
 in the future.
@@ -98,10 +98,10 @@ sequencing, could create the deleted file "ThisIsALong%8c".
 .PP
 .I Urm\^
 is used to restore deleted files or directories.
-Given "\f3dirname/basename\fP" or 
-"\f3dirname/.gone/basename\fP" as an argument
+Given "\f3dirpath/basename\fP" or 
+"\f3dirpath/.gone/basename\fP" as an argument
 .I urm\^
-will search for "\f3dirname/.gone/basename\fP"
+will search for "\f3dirpath/.gone/basename\fP"
 and restore the file or directory if found.
 The second form allows the user to give a command of the form
 "\f3urm foo/bar/.gone/*\fP" and have the shell

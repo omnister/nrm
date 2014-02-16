@@ -4,6 +4,8 @@
 
 #define ERR -1
 #define BUFLEN	512
+#define WARNSIZE    10000000	/* filesize that will trigger warning */
+                                /* about using nrm */
 #define GRACETIME   3	/* default gracetime for deleted files */
 			/* if you change this, then also change */
 			/* nrm.1  &  nrm.cleanup*/

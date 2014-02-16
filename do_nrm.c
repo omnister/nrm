@@ -9,7 +9,7 @@ char    *fname;
     extern int  errno;
     extern int  iflag, fflag, rflag, bflag;
     struct stat stbuf;
-    int dirflag, symflag;
+    int dirflag, symflag, sizeflag;
 
     errno = 0;      /* clear errno so no bogus msg's */
 
@@ -19,6 +19,7 @@ char    *fname;
     }
     dirflag =  ((stbuf.st_mode & S_IFMT) == S_IFDIR);
     symflag =  ((stbuf.st_mode & S_IFMT) == S_IFLNK);
+    sizeflag = ((int) stbuf.st_size  >= WARNSIZE);
 
     if ((strindex(fname, ".gone") != -1) || 
         !strcmp(fname, "..") || 
@@ -38,6 +39,14 @@ char    *fname;
         if (!pick(fname))
             return(0);
     } else if (fflag ) {     /* verbose mode */
+	if( sizeflag ) {     /* a BIG file is being nrm'ed */
+            fprintf(stderr,
+"%s: %s is a very large file.\n\
+    It has been moved to the .gone directory. Unless you really need to\n\
+    save the .gone version as a safety copy, please use /bin/rm to\n\
+    permanently remove it and save diskspace.\n",
+		progname, fname);
+	}
         if (access(fname, 02) < 0 && !symflag ) {
             if (!bflag)  {   /* not in background */
                 fprintf(stderr, "%s: %o mode", fname, stbuf.st_mode & 0777);

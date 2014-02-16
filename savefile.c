@@ -60,6 +60,19 @@ char	*path;	    /* tries real hard to unlink pre-existing dst file */
 	}
     } 
 
+    /*
+    ** the following 5 lines are needed only because rename(src,dst)
+    ** returns *no* error, and does not remove the src file when the src
+    ** and dst files happen to be linked.  Because of this, we have to
+    ** pre-remove the dst file.  If/when rename() is fixed, these lines
+    ** can be removed...  <RCW 7/20/94>
+    */
+    if (expunge(dstfile)) { /* make sure dest is gone */
+	errout("%s: %s not removed: can't link with %s",
+	    progname, path, dstfile);
+	return(ERR);
+    }
+
     if (rename(path, dstfile)) {    /* problems... */
 	if (errno == ENOENT)	 { /* directory doesn't exist */
 	    /* printf("errno = %d\n",errno); */
