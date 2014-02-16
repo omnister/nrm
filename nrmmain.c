@@ -1,25 +1,25 @@
 #include "nrm.h"
 #include <signal.h>
 
-char *progname;
+char    *progname;
 int iflag = 0;
 int rflag = 0;
 int fflag = 1;
 int bflag = 0;      /* internal flag to tell if we're in the background */
 int gtime = 0;      /* default gracetime offset for atimes. */
-/* the (3 day) offset is built into     */
-/* the nrm.cleanup script.  It deletes  */
-/* files whose atime is older than      */
-/* GRACETIME days   */
+					/* the (3 day) offset is built into     */
+					/* the nrm.cleanup script.  It deletes  */
+					/* files whose atime is older than      */
+					/* GRACETIME days   */
 
-static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.12 88/03/09 10:23:50 walker Exp $";
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.14 88/11/02 17:30:16 walker Exp $";
 
 main(argc, argv)    /* nrm: recoverably delete files */
 int argc;
-char *argv[];
+char    *argv[];
 {
-    extern int optind;  /* argv index of next option */
-    extern int opterr;
+    extern int  optind;  /* argv index of next option */
+    extern int  opterr;
     extern char *optarg;
     int c;
     int errflag;
@@ -42,7 +42,7 @@ char *argv[];
             rflag++;
             break;
         case 't':
-            gtime = (atoi(optarg)-GRACETIME);
+            gtime = (atoi(optarg) - GRACETIME);
             break;
         case '?':
             errflag++;
@@ -57,11 +57,11 @@ char *argv[];
     }
 
     if ((errflag && fflag) || (argc <= 1)) {
-        fprintf(stderr,"usage: %s [-fir][-t time] file ...\n",progname);
+        fprintf(stderr, "usage: %s [-fir][-t time] file ...\n", progname);
         exit(2);
     } else {
         returncode = 0;
-        for(; optind < argc; optind++) {
+        for (; optind < argc; optind++) {
             temp = do_nrm(argv[optind]);
             if (temp > returncode)
                 returncode = temp;
@@ -69,3 +69,5 @@ char *argv[];
     }
     return(returncode);
 }
+
+

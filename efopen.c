@@ -3,9 +3,9 @@ void exit();
 void errout();
 
 FILE *efopen(file, mode)    /* fopen file, die if can't */
-char *file, *mode;
+char    *file, *mode;
 {
-    FILE *fp, *fopen();
+    FILE * fp, *fopen();
     extern char *progname;
 
     if ((fp = fopen(file, mode)) != NULL)
@@ -15,3 +15,5 @@ char *file, *mode;
     exit(1);
     return(0);    /* unreachable statement to pacify lint */
 }
+
+

@@ -5,14 +5,14 @@ int fflag = 1;
 int iflag = 0;      /* dummy global for isdir() */
 int bflag = 0;      /* dummy global for isdir() */
 
-static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.12 88/03/09 10:23:50 walker Exp $";
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: sharfile,v 1.14 88/11/02 17:30:16 walker Exp $";
 
 main(argc, argv)    /* urm: restore deleted files/dirs */
 int argc;
-char *argv[];
+char    *argv[];
 {
-    extern int optind;  /* argv index of next option */
-    extern int opterr;
+    extern int  optind;  /* argv index of next option */
+    extern int  opterr;
     int c;
     int errflag = 0;
     int temp, returncode;
@@ -31,13 +31,12 @@ char *argv[];
             break;
         }
     if (errflag && fflag) {
-        fprintf(stderr,"usage: %s [-f] file ...\n",progname);
+        fprintf(stderr, "usage: %s [-f] file ...\n", progname);
         exit(2);
-    }
-
-    else {
+    } 
+        else {
         returncode = 0;
-        for(; optind < argc; optind++) {
+        for (; optind < argc; optind++) {
             temp = restore(argv[optind]);
             if (temp > returncode)
                 returncode = temp;
@@ -45,3 +44,5 @@ char *argv[];
     }
     return(returncode);
 }
+
+

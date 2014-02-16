@@ -19,7 +19,7 @@ find2 ()
 {
     if [ -x /usr/local/bin/find2 ] ; then
     # find2 is a modified find that avoids searching nfs filesystems
-        /usr/local/bin/find2 "$@" -fstype hfs -fsstop 
+        /usr/local/bin/find2 "$@" -fsonly hfs
     else
         find "$@" -fstype hfs
     fi

@@ -60,5 +60,5 @@ rmdir: killdir.o killdirmain.o isdir.o errout.o
 	cc killdir.o killdirmain.o isdir.o errout.o $(CCFLAGS) -o rmdir
 rlist: rlist.o rmain.o isdir.o
 	cc rlist.o rmain.o isdir.o $(CCFLAGS) -o rlist
-mvdir: mvdir.o mvdirmain.o isdir.o errout.o
-	cc mvdir.o mvdirmain.o isdir.o errout.o $(CCFLAGS) -o mvdir
+mvdir: ttyin.o efopen.o linkdir.o pick.o expunge.o mvdir.o updatetime.o mvdirmain.o isdir.o errout.o
+	cc ttyin.o linkdir.o efopen.o mvdir.o pick.o expunge.o mvdirmain.o updatetime.o isdir.o errout.o $(CCFLAGS) -o mvdir

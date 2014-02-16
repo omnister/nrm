@@ -3,15 +3,17 @@
 #include <sys/stat.h>
 
 isdir(fname) /* file a directory? 1 if true, -1 if error, 0 otherwise */
-char *fname;
+char    *fname;
 {
     struct stat stbuf;
 
-    if(stat(fname, &stbuf) == -1) {
+    if (stat(fname, &stbuf) == -1) {
         return(-1);
     }
-    if((stbuf.st_mode & S_IFMT) == S_IFDIR) {
+    if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
         return(1);
-    } else 
+    } else
         return(0);
 }
+
+

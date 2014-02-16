@@ -10,10 +10,10 @@ int iflag = 0;  /* not used but needed to link with errout */
 
 main(argc, argv)    /* print file modification times */
 int argc;
-char *argv[];
+char    *argv[];
 {
-    extern int optind;  /* argv index of next option */
-    extern int opterr;
+    extern int  optind;  /* argv index of next option */
+    extern int  opterr;
     int c;
     int errflag = 0;
     int temp, returncode;
@@ -41,21 +41,23 @@ char *argv[];
             break;
         }
     if (errflag) {
-        fprintf(stderr,"usage: %s [-acm] file ...\n",progname);
+        fprintf(stderr, "usage: %s [-acm] file ...\n", progname);
         exit(2);
     }
 
-    if(!aflag && !cflag && !mflag) { /* proper defaults for flags */
+    if (!aflag && !cflag && !mflag) { /* proper defaults for flags */
         aflag++;
         cflag++;
         mflag++;
     }
 
     returncode = 0;
-    for(; optind < argc; optind++) {
+    for (; optind < argc; optind++) {
         temp = printtimes(argv[optind]);
         if (temp > returncode)
             returncode = temp;
     }
     return(returncode);
 }
+
+
