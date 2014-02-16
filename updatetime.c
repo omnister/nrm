@@ -24,9 +24,9 @@ int offset; /* offset (in days) */
         if ((offset == 0) && ((errno == EPERM) || (errno == EACCES)))
             if ((fd = open(path,O_RDONLY)) != -1) { /* last try */
                 if (read(fd,junk,1) != ERR) { /* read will modify atime */
-                    close(fd);  /* don't want to run out of fd's!!! */
-                    return(0);
-                }
+                	close(fd);  /* don't want to run out of fd's!!! */
+                	return(0);
+				}
             }
         errout("warning: %s: can't set time on file %s",progname,path,"");
         return(0); /* warning */

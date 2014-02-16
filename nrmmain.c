@@ -5,7 +5,7 @@ char *progname;
 int iflag = 0;
 int rflag = 0;
 int fflag = 1;
-int bflag = 0;      /* internal flag to tell if we're in the background */
+int bflag = 0;		/* internal flag to tell if we're in the background */
 int gtime = 0;      /* default gracetime offset for atimes. */
 /* the (3 day) offset is built into     */
 /* the nrm.cleanup script.  It deletes  */
@@ -46,13 +46,13 @@ char *argv[];
             errflag++;
             break;
         }
-    /* bug fix: find out if we are in the background... if so
-    ** then set the background flag to prevent asking any questions...
-    ** (we still print out certain errors (a la /bin/rm)    */
+	/* bug fix: find out if we are in the background... if so
+	** then set the background flag to prevent asking any questions...
+	** (we still print out certain errors (a la /bin/rm)    */
 
-    if (signal(SIGINT, SIG_IGN) == SIG_IGN ) {
-        bflag = 1;
-    }
+	if (signal(SIGINT, SIG_IGN) == SIG_IGN ) {
+		bflag = 1;
+	}
 
     if ((errflag && fflag) || (argc <= 1)) {
         fprintf(stderr,"usage: %s [-fir][-t time] file ...\n",progname);

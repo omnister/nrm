@@ -14,5 +14,5 @@ char *src, *dst;    /* deletes dst first !!! */
         expunge(dst);       /* junk hanging around */
         return(1);
     }
-    return(1);              /* unreachable but keeps lint happy */
+	return(1);				/* unreachable but keeps lint happy */
 }

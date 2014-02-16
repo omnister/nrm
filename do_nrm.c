@@ -7,7 +7,7 @@ char *fname;
 {
     extern char *progname;
     extern int errno;
-    extern int iflag,fflag,rflag,bflag;
+    extern int iflag,fflag,rflag;
     struct stat stbuf;
     int dirflag;
 
@@ -35,16 +35,11 @@ char *fname;
             fprintf(stderr,"directory ");
         if (!pick(fname))
             return(0);
-    } else if (fflag ) {     /* verbose mode */
+    } else if (fflag) {     /* verbose mode */
         if (access(fname,02) < 0) {
-            if(!bflag)  {   /* not in background */
-                fprintf(stderr,"%s: %o mode",fname,stbuf.st_mode&0777);
-                if (!pick(""))
-                    return(0);
-            } else {        /* in background */
-                fprintf(stderr,"%s: removing \'%s\' with %o mode\n",
-                    progname,fname,stbuf.st_mode&0777);
-            }
+            fprintf(stderr,"%s: %o mode",fname,stbuf.st_mode&0777);
+            if (!pick(""))
+                return(0);
         }
     }
 
