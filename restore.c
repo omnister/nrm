@@ -50,16 +50,13 @@ char    *path;
             return(0);
     }
 
-    if (dirflag) {   /* must be a directory */
-        if (dodmv(filesrc, path)) {
+    if (dofmv(filesrc, path)) {
+    	if (dirflag) {   /* a directory */
             errout("%s: can't rename directory %s", progname, path, "");
-            return(2 * fflag);
-        }
-    } else {        /* must be a file */
-        if (dofmv(filesrc, path)) {
+    	} else {        /* must be a file */
             errout("%s: can't rename file %s", progname, path, "");
-            return(2 * fflag);
         }
+        return(2 * fflag);
     }
     return(0);
 }

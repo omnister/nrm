@@ -4,15 +4,18 @@
 char    *progname;
 int iflag = 0;
 int rflag = 0;
+int sflag = 0;	    /* turn on sequenced backups */
 int fflag = 1;
 int bflag = 0;      /* internal flag to tell if we're in the background */
-int gtime = 0;      /* default gracetime offset for atimes. */
-/* the (3 day) offset is built into     */
-/* the nrm.cleanup script.  It deletes  */
-/* files whose atime is older than      */
-/* GRACETIME days   */
 
-static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: /va/walker/bin/src/nrm/sharfile,v 1.10 88/03/03 12:12:12 walker Exp $";
+
+int gtime = 0;      /* default gracetime offset for atimes. */
+		    /* the (3 day) offset is built into     */
+		    /* the nrm.cleanup script.  It deletes  */
+		    /* files whose atime is older than      */
+		    /* GRACETIME days   */
+
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: nrmmain.c,v 1.1 93/05/13 17:42:15 walker Exp $";
 
 main(argc, argv)    /* nrm: recoverably delete files */
 int argc;
@@ -30,7 +33,7 @@ char    *argv[];
 
     progname = argv[0];
 
-    while ((c = getopt(argc, argv, "ifrt:")) != EOF)
+    while ((c = getopt(argc, argv, "ifrt:s")) != EOF)
         switch (c) {
         case 'i':
             iflag++;
@@ -40,6 +43,9 @@ char    *argv[];
             break;
         case 'r':
             rflag++;
+            break;
+        case 's':
+	    sflag++;
             break;
         case 't':
             gtime = (atoi(optarg) - GRACETIME);
@@ -57,7 +63,8 @@ char    *argv[];
     }
 
     if ((errflag && fflag) || (argc <= 1)) {
-        fprintf(stderr, "usage: %s [-fir][-t time] file ...\n", progname);
+        fprintf(stderr, "usage: %s [-f][-i][-r][-s][-t time] file ...\n",
+	    progname);
         exit(2);
     } else {
         returncode = 0;

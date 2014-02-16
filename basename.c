@@ -2,7 +2,7 @@
 #include "nrm.h"
 
 /* a  little driver for testing ... */
-/*
+/* 
 main()
 {
     char buf[BUFLEN];
@@ -15,11 +15,18 @@ main()
 }
 */
 
+/*
+** Called with full dir name in "dir"
+**    strips trailing '/''s
+** if called w/("/usr/local/bin/",s2) returns with:
+**    (s1=>/usr/local/,s2=>bin)             
+** if called w/("foo",s2) returns with:
+**    (s1=>./, s2=>foo)                     
+*/
+void basename(dir, file)     
+char    *dir, *file;         
+{
 
-void basename(dir, file)     /* called with full dir name in "dir"         */
-char    *dir, *file;         /* strips trailing '/''s                      */
-{                            /* if called w/("/usr/local/bin/",s2) returns:*/
-                             /* with (s1=>/usr/local/,s2=>bin)             */
     char    s1[BUFLEN];
     char    s2[BUFLEN];
     char    *p1, *p;
@@ -36,7 +43,12 @@ char    *dir, *file;         /* strips trailing '/''s                      */
         strcpy(s2, p);
     } /* s2 now points to stripped file name */
     dir[(strlen(dir)-strlen(s2))-junk] = '\0'; /* just path alone */
+
     strcpy(file, s2);
+
+    if (strlen(dir) == 0)  {
+	strcpy(dir,"./");
+    }
 }
 
 

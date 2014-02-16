@@ -5,7 +5,13 @@ nrm, urm  \- recoverably remove and restore files
 .SH SYNOPSIS
 .B nrm
 [
-.B \-fir
+.B \-f
+] [
+.B \-i
+] [
+.B \-r
+] [
+.B \-s
 ] [
 .B \-t gracetime
 ] file ...
@@ -65,6 +71,31 @@ to be the default number of days
 (3)
 in the future.
 .PP
+If the
+.B \-s
+(sequenced backup) option is given,
+.I nrm\^
+will not overwrite saved entries in the "\f3/.gone\fP" directory,
+but instead will save each file with a unique suffix such that every
+deleted file is preserved for the full
+.B gracetime
+number of days.
+.PP
+On long-filename systems, the suffix is of the form:
+"-YEAR-MONTH-DAY-HOUR:MIN:SEC", where each named field is 2 characters long:
+eg., "foo-93-05-09-21:32:17".  If two files of the same name are
+deleted within the same second (thereby potentially mapping to the same
+name), the conflict is avoided by adding a random string to the conflicting
+name.  The disambiguating string is of the form: "%xx" where "x" is randomly
+chosen from the set "[0-9A-Za-z]". Eg., "foo-93-05-09-21:32:17%fQ".
+.PP
+On short-filename systems (limited to filenames of 14 characters), the 
+name of the deleted file is constructed by truncating the original name
+to 11 characters, and appending a random suffix of the form "%xx", as described
+above.  Deleting the file "ThisIsALongFilename", with 
+.B \-s
+sequencing, could create the deleted file "ThisIsALong%8c".
+.PP
 .I Urm\^
 is used to restore deleted files or directories.
 Given "\f3dirname/basename\fP" or 
@@ -89,6 +120,15 @@ faster than similiar script-based implementations.
 .PP
 .I Nrm\^
 works over RFA.
+.PP
+When updating system executable files, using
+.I nrm\^ 
+to remove the old file will prevent causing a
+"killed on text modification" swap error.
+The removed version will be permanently deleted
+.B gracetime
+days after the last process has ceased to
+swap to the removed file.
 .PP
 This renaming strategy was used to  give a good summary 
 when using \f3du\fP(1) to evaluate freed-up disk space. 
@@ -119,4 +159,4 @@ files "\f3.gone/*\fP".  The
 option does not work on symbolic links.
 .PP
 .SH AUTHOR
-Rick Walker ...hplabs!hpl-opus!walker 
+Rick Walker (walker@hpl-opus.hpl.hp.com)

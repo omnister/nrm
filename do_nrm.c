@@ -50,16 +50,9 @@ char    *fname;
         }
     }
 
-    if (dirflag) {  /* file is directory */
-        if (savedir(fname)) {
-            return(2 * fflag);
-        }
-    } else {        /* file is not a directory */
-        if (savefile(fname)) {
-            return(2 * fflag);
-        }
+    if (savefile(fname)) {
+        return(2 * fflag);
     }
     return(0);
 }
-
 

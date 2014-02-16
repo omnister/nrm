@@ -1,38 +1,35 @@
-HSOURCES=basename.c linkdir.c expunge.c  errout.c\
+HSOURCES=basename.c expunge.c  errout.c\
 	do_nrm.c nrmmain.c urmmain.c \
 	restore.c updatetime.c gtime.c printtimes.c
 NSOURCES=efopen.c strindex.c ttyin.c  isdir.c pick.c 
 OBJECTS=efopen.o ttyin.o errout.o pick.o strindex.o\
-	basename.o expunge.o linkdir.o updatetime.o 
-ALL=$(HSOURCES) $(NSOURCES) nrm.h\
-	dofmv.c dodmv.c  savedir.c savefile.c\
-	nrm.1 nrm.cleanup make_nrm.h makefile
+	basename.o expunge.o updatetime.o 
+ALL=README nrm.1 makefile $(HSOURCES) $(NSOURCES) nrm.h\
+	dofmv.c savefile.c\
+	nrm.cleanup make_nrm.h
 NLINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
-	basename.c expunge.c linkdir.c updatetime.c\
-	do_nrm.c nrmmain.c savedir.c savefile.c
+	basename.c expunge.c updatetime.c\
+	do_nrm.c nrmmain.c savefile.c
 ULINTSRC= efopen.c ttyin.c errout.c pick.c strindex.c\
-	basename.c expunge.c linkdir.c updatetime.c\
-	urmmain.c isdir.c dodmv.c dofmv.c restore.c
+	basename.c expunge.c updatetime.c\
+	urmmain.c isdir.c dofmv.c restore.c
 SYSBIN=/usr/local/bin/
 MANDIR=/usr/local/man/man1/
 CATDIR=/usr/local/man/cat1/
 CLEANUP=/etc
 SRC=/usr/local/src/cmd/nrm/nrm/
 
-# if your system has the berkely rename(2) function available,
-# use the RENAME define for CCFLAGS below:
 
-#CCFLAGS=-O
-CCFLAGS=-O -DRENAME
+CCFLAGS=-O
 
 all: nrm urm gtime
 
-nrm: $(OBJECTS) do_nrm.o nrmmain.o savedir.o savefile.o
-	cc $(OBJECTS) do_nrm.o nrmmain.o savedir.o savefile.o -o nrm $(CCFLAGS) 
+nrm: $(OBJECTS) do_nrm.o nrmmain.o savefile.o
+	cc $(OBJECTS) do_nrm.o nrmmain.o savefile.o -o nrm $(CCFLAGS) 
 	strip nrm			
 
-urm: $(OBJECTS) urmmain.o isdir.o dodmv.o dofmv.o restore.o
-	cc $(OBJECTS) urmmain.o isdir.o dodmv.o dofmv.o restore.o -o urm $(CCFLAGS)
+urm: $(OBJECTS) urmmain.o isdir.o dofmv.o restore.o
+	cc $(OBJECTS) urmmain.o isdir.o dofmv.o restore.o -o urm $(CCFLAGS)
 	strip urm
 
 gtime: gtime.o printtimes.o errout.o
@@ -48,7 +45,7 @@ install: nrm urm nrm.1 nrm.cleanup sharfile
 	-cp nrm.cleanup $(CLEANUP)
 
 shar: $(ALL) 
-	shar -bcv $(ALL) > sharfile 
+	shar -b -c -v $(ALL) > sharfile
 
 lint: $(NLINTSRC) $(ULINTSRC)
 	echo "******** lint output for nrm files *********" > fluff

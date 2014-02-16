@@ -5,7 +5,7 @@ int fflag = 1;
 int iflag = 0;      /* dummy global for isdir() */
 int bflag = 0;      /* dummy global for isdir() */
 
-static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: /va/walker/bin/src/nrm/sharfile,v 1.10 88/03/03 12:12:12 walker Exp $";
+static char id[] = "@(#) Bugs to Rick Walker, hplabs!walker $Header: urmmain.c,v 1.1 93/05/13 17:42:24 walker Exp $";
 
 main(argc, argv)    /* urm: restore deleted files/dirs */
 int argc;
