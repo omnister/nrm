@@ -5,7 +5,6 @@ char *progname;
 int iflag = 0;
 int rflag = 0;
 int fflag = 1;
-int bflag = 0;		/* internal flag to tell if we're in the background */
 int gtime = 0;      /* default gracetime offset for atimes. */
 /* the (3 day) offset is built into     */
 /* the nrm.cleanup script.  It deletes  */
@@ -47,11 +46,11 @@ char *argv[];
             break;
         }
 	/* bug fix: find out if we are in the background... if so
-	** then set the background flag to prevent asking any questions...
+	** then turn on the -f flag to prevent asking any questions...
 	** (we still print out certain errors (a la /bin/rm)    */
 
 	if (signal(SIGINT, SIG_IGN) == SIG_IGN ) {
-		bflag = 1;
+		fflag = 0;
 	}
 
     if ((errflag && fflag) || (argc <= 1)) {

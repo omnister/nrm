@@ -3,7 +3,6 @@
 char    *progname;  /* program name for error message */
 int fflag = 1;
 int iflag = 0;      /* dummy global for isdir() */
-int bflag = 0;      /* dummy global for isdir() */
 
 main(argc, argv)    /* urm: restore deleted files/dirs */
 int argc;
