@@ -132,6 +132,7 @@ char **argv;
     }
 
     /* rm returns usage message if no files are specified */
+    // if (((errflag) || (optind >= argc)) && fflag) {
 
     if ((errflag && fflag) || (optind >= argc)) {
         fprintf(stderr, "%s: too few arguments\n", 

@@ -36,7 +36,7 @@ urm: $(OBJECTS) urmmain.o isdir.o dofmv.o restore.o
 gtime: gtime.o printtimes.o errout.o
 	cc gtime.o printtimes.o errout.o $(CCFLAGS) -o gtime
 
-install: nrm urm nrm.1 nrm.cleanup sharfile
+install: nrm urm nrm.1 nrm.cleanup 
 	-$(CP) nrm $(SYSBIN)
 	-$(CP) urm $(SYSBIN)
 	-$(CP) gtime $(SYSBIN)
