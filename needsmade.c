@@ -9,11 +9,10 @@ int cflag = 0;
 int fflag = 1;
 int mflag = 0;
 int iflag = 0;  /* not used but needed to link with errout */
+int needsmade(char *path1, char *path2);
 
 
-main(argc, argv)    /* test to see if first file is newer than second */
-int argc;
-char    *argv[];
+int main(int argc, char **argv)    /* test to see if first file is newer than second */
 {
     extern int  optind;  /* argv index of next option */
     extern int  opterr;
@@ -40,9 +39,7 @@ char    *argv[];
 }
 
 
-needsmade(path1, path2)
-char    *path1;
-char    *path2;
+int needsmade(char *path1, char *path2)
 {
 	double delta;
     struct stat buf1;

@@ -44,6 +44,9 @@ install: nrm urm nrm.1 nrm.cleanup
 	/bin/rm -f $(CATDIR)nrm.1
 	-$(CP) nrm.cleanup $(CLEANUP)
 
+clean: 
+	-$(RM) $(OBJECTS)
+
 shar: $(ALL) 
 	shar -b -c -v $(ALL) > sharfile
 
