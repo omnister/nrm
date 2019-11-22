@@ -1,7 +1,6 @@
 #include <string.h>
 
-strindex(s, t)  /* return index of t in s, -1 if none */
-char    *s, *t;
+int strindex(char *s, char *t)  /* return index of t in s, -1 if none */
 {
     int i, n;
 

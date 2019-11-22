@@ -4,10 +4,14 @@
 #include <errno.h>
 #include <dirent.h>
 
-expunge(path)          /* recursive file/directory deleter */
-char    *path;         /* returns 0 if ok, -1 if can't open, */
-{                      /* 1,2,3... for # of unremovable subdirs */
-                       /* roughly equ. to /bin/rm -rf  */
+/* recursive file/directory deleter */
+/* returns 0 if ok, -1 if can't open, */
+/* 1,2,3... for # of unremovable subdirs */
+/* roughly equ. to /bin/rm -rf  */
+
+int expunge(char *path) 
+{                      
+                       
     int errflag;
     struct dirent *dp;
     DIR * dirp;
@@ -56,7 +60,7 @@ char    *path;         /* returns 0 if ok, -1 if can't open, */
             }
         }
     }
-    close(dirp);
+    closedir(dirp);
     if (rmdir(path) == -1) {
         errout("%s: %s not removed (1): can't unlink", progname, path, "");
         errflag++;

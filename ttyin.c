@@ -2,7 +2,7 @@
 void exit();
 extern int  fflag;
 
-ttyin() /* process response from /dev/tty (version 1) */
+int ttyin(void) /* process response from /dev/tty (version 1) */
 {
     char    buf[BUFSIZ];
     FILE * efopen();

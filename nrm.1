@@ -212,15 +212,18 @@ An attempt was made to provide the same exit codes
 and user interface as 
 .I rm.
 Returns 0 if successful, 2 on
-errors. Unlike gnu utils nrm -rv <dir> does not report every
-component of the
-dir (rename effect).
-.PP
-It is forbidden to remove the file \fI..\fR, the file \fI.\fR
-and the files \fI.gone/*\fR.
+errors.
+It is forbidden to remove the file 
+.I "..",
+the file 
+.I "."
+and the
+files 
+.I ".gone/*".  
 The  
 .I \-t
 option does not work on symbolic links.
 .PP
 .SH AUTHOR
-Rick Walker (walker@omnisterra.com)
+Rick Walker (walker@omnisterra.com). Ncp and nmv script by Ken Poulton
+(ken.poulton@keysight.com).

@@ -7,9 +7,8 @@
 
 long    time();
 
-updatetime(path, offset)
-char    *path;
-int offset; /* offset (in days) */
+/* offset (in days) */
+int updatetime(char *path, int offset)
 {
     int fd;
     char    junk[2];   /* used by read call */

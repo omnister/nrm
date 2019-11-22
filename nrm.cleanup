@@ -27,11 +27,10 @@ GRACETIME="+3"          #gracetime number of days to let files hang around
 # Linux 2.0.18
 nice find / -type d -name '.gone' -print 2>/dev/null |
 
-
 while read file
 do
     #kill all old files 
-    nice find $file ! -type d -atime $GRACETIME\
+    find $file ! -type d -atime $GRACETIME\
     -exec /bin/rm -f {} \; \
     -print \
     >> $TEMPFILE 2>>$BUGFILE

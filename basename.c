@@ -30,7 +30,7 @@ char    *dir, *file;
     char    s1[BUFLEN];
     char    s2[BUFLEN];
     char    *p1, *p;
-    int junk=0;   /* used to keep track of space left in strtok buffer */
+    int junk;   /* used to keep track of space left in strtok buffer */
 
     strcpy(s1, dir);
     p1 = s1;    /* p1 is pointer to private copy of dir string */

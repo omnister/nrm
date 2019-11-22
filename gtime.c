@@ -8,9 +8,7 @@ int mflag = 0;
 int iflag = 0;  /* not used but needed to link with errout */
 
 
-main(argc, argv)    /* print file modification times */
-int argc;
-char    *argv[];
+int main(int argc, char *argv[])    /* print file modification times */
 {
     extern int  optind;  /* argv index of next option */
     extern int  opterr;

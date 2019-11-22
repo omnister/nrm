@@ -2,13 +2,13 @@
 #define FEXISTS 0
 
 int gtime = 0;  /* amount of offset (days) used when restoring times */
-restore(path)   /* restore file/dir @ path: return zero if ok */
-char    *path;
+
+int restore(char *path)   /* restore file/dir @ path: return zero if ok */
 {
     extern char *progname;
     extern int  errno;
     extern int  fflag;
-    char    filesrc[BUFLEN];
+    char    filesrc[BUFLEN*3];
     char    dir[BUFLEN];
     char    file[BUFLEN];
     int index;
@@ -36,12 +36,11 @@ char    *path;
     basenm(dir, file);    /* puts dir in dir and file in file */
     /* called with full path in first arg */
 
-    sprintf(filesrc, "%s%s/%s", dir, ".gone", file);
+    snprintf(filesrc, BUFLEN*3, "%s%s/%s", dir, ".gone", file);
     if ((dirflag = isdir(filesrc)) == -1) {
         errno = 0;  /* make sure errout doesn't print system err msg */
 
-        /* errout("deleted file: %s does not exist", path, "", ""); */
-        errout("deleted file: %s does not exist", filesrc , "", "");
+        errout("deleted file: %s does not exist", path, "", "");
         return(2 * fflag);
     }
 

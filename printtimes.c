@@ -3,8 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>   /* required for stat  */
 
-printtimes(path)
-char    *path;
+int printtimes(char *path)
 {
     extern int  aflag, cflag, mflag;
     struct stat buf;

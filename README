@@ -1,13 +1,9 @@
+3/27/98
+
 nrm: A New RM allowing file recovery and sequenced backup versions.
 
-Released under GNU GPL V2 or later.  If you make changes, or find bugs,
-please let me know so I can fold them back into the main distribution. 
-
-Nrm has been written to as exact a replica of rm(1) as possible
-with regards to behavior and error codes.  
-
-Unlike gnu utils nrm -rv <dir> does not report every component of the
-dir (rename effect)
+Released under GNU GPL.  If you make changes, or find bugs, please let
+me know so I can fold them back into the main distribution.
 
 Installation Hints:
 
@@ -20,11 +16,12 @@ do a 'make install' which will do the following:
 	2) copy 'urm' to /usr/local/bin/urm
 	3) copy 'nrm.cleanup' to /etc/nrm.cleanup
 	4) copy 'nrm.1' to /usr/local/man/man1/nrm.1
+	5) copy and link 'ncp' 'nmv' to /usr/local/bin
 
 Finally, you will need to manually add the following line to
 root's crontab:
 
-	30 1 * * *      /etc/nrm.cleanup      
+		30 1 * * *      /etc/nrm.cleanup      
 
 This example will run the cleanup script every night at 1:30 AM.  The
 cleanup script examines all ".gone" directories system wide and removes
@@ -32,25 +29,25 @@ any files with access dates older than 3 days.  Any empty .gone directories
 are also deleted.
 
 You can play with nrm by explicitly typing "nrm", but for long term
-use I recommend creating a shell alias.  For example, in bash, I 
+use I recommend creating a shell alias.  For example, in pdksh, I 
 have the following lines in my .kshrc:
 
-     if [ "`which nrm`" != "" ] ; then
+        if [ "`whence nrm`" != "" ] ; then
             alias rm=nrm
             alias cp=ncp
             alias mv=nmv
-	    alias RM='/bin/rm'
-	    alias CP='/bin/cp'
-	    alias MV='/bin/mv'
-    fi
-
-The file 'ncp' is a safe cp(1) that nrm's a file before copying
-onto it.  It can be symlinked as 'nmv' and will similiarly
-protect the target of a mv(1).
+    	    alias RM='/bin/rm'
+    	    alias CP='/bin/cp'
+    	    alias MV='/bin/mv'
+        fi
 
 When I want to *really* remove something I either use the "RM" alias
 or just type "\rm".  The backslash will prevent the alias from being
 used, and the shell will look for a real program named rm, usually /bin/rm.
+
+Ncp(1) and Nmv(1) are ksh scripts written by Ken Poulton
+(poulton@opus.hpl.hp.com), and can be used as replacements for mv(1) and
+cp(1) to protect the user from overwriting a target file. 
 
 All the sources were edited using 4 character tabstops (in vi: set ts=4).
 For distribution, tabstops have been converted into spaces using the
@@ -60,16 +57,8 @@ The program 'gtime' is helpful if you want to look at filetimes.
 It is invoked 'gtime -acm' and prints access, change and modify times.
 If no flags specified, all times are printed.
 
-The program 'needsmade' facilitates simple make-like activities
-from the shell.  It returns 0,1 or 2 when called as 
-
-    needsmade <file1> <file2>
-
-depending on whether file1 is newer, older than file2, or doesn't
-exist.
-
 --
 Rick Walker
-walker@omnisterra.com
+walker@opus.hpl.hp.com
 
 

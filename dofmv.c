@@ -1,8 +1,9 @@
 
 #include "nrm.h"
 
-dofmv(src, dst)        /* rename file from src to dst name */
-char    *src, *dst;    /* tries real hard to unlink pre-existing dst file */
+/* rename file from src to dst name */
+/* tries real hard to unlink pre-existing dst file */
+int dofmv(char *src, char *dst) 
 {
 
     if ((rename(src, dst)) != 0) {

@@ -23,10 +23,14 @@ int gtime = 0;      /* default gracetime offset for atimes. */
                     /* GRACETIME days   */
 
 
+static char id[] = "@(#) Bugs to Rick Walker, walker@omnisterra.com $Header: /usr/local/src/cmd/nrm/gnu_nrmmain.c,v 1.1 1998/03/27 08:40:09 walker Exp $";
+
 int main (argc, argv) /* nrm: recoverably delete files */
 int argc;
 char **argv;
 {
+    int digit_optind = 0;
+
     int c;
     int errflag;
     int temp, returncode;
@@ -41,6 +45,7 @@ char **argv;
     progname = argv[0];
 
     while (1) {
+        int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
             {"directory", 0, 0, 'r'},
@@ -122,19 +127,18 @@ char **argv;
         printf("  -h, --help            display this help and exit\n");
         printf("      --version         output version information and exit\n");
         printf("\n");
-        printf("Report bugs to walker@omnisterra.com\n");  
+        printf("Report bugs to walker@opus.hpl.hp.com\n");  
         exit(0);
     }
 
     if (vflag) {
-        printf("nrm: Linux version 0.1 (walker@omnisterra.com)\n");
+        printf("nrm: Linux version 0.1 (walker@opus.hpl.hp.com)\n");
         exit(0);
     }
 
     /* rm returns usage message if no files are specified */
-    // if (((errflag) || (optind >= argc)) && fflag) {
 
-    if ((errflag && fflag) || (optind >= argc)) {
+    if (((errflag) || (optind >= argc)) && fflag) {
         fprintf(stderr, "%s: too few arguments\n", 
             progname);
         fprintf(stderr, "Try `%s --help' for more information.\n",

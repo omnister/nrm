@@ -2,8 +2,7 @@
 #include <sys/types.h> /* for stat */
 #include <sys/stat.h>  /* for stat */
 
-do_nrm(fname)
-char    *fname;
+int do_nrm(char *fname)
 {
     extern char *progname;
     extern int  errno;
