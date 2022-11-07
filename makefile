@@ -18,7 +18,7 @@ MANDIR=/usr/local/man/man1/
 CATDIR=/usr/local/man/cat1/
 CLEANUP=/etc
 SRC=/usr/local/src/cmd/nrm/nrm/
-CP=ncp
+CP=./ncp
 
 
 CCFLAGS=-O
@@ -37,6 +37,7 @@ gtime: gtime.o printtimes.o errout.o
 	cc gtime.o printtimes.o errout.o $(CCFLAGS) -o gtime
 
 install: nrm urm nrm.1 nrm.cleanup 
+	/bin/cp ncp $(SYSBIN)
 	-$(CP) nrm $(SYSBIN)
 	-$(CP) urm $(SYSBIN)
 	-$(CP) gtime $(SYSBIN)
